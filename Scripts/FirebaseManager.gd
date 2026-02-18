@@ -17,14 +17,14 @@ func login(email: String, password: String) -> void:
 	var request = HTTPRequest.new()
 	add_child(request)
 
+	request.request_completed.connect(_on_login_response)
+
 	request.request(
 		url,
 		["Content-Type: application/json"],
 		HTTPClient.METHOD_POST,
 		JSON.stringify(body)
 	)
-
-	request.connect("request_completed", Callable(self, "_on_login_response"))
 
 
 func _on_login_response(result, response_code, headers, body):
@@ -39,15 +39,15 @@ func _on_login_response(result, response_code, headers, body):
 	else:
 		print("Error al iniciar sesión: ", json)
 
+
 func download_save() -> void:
 	var url = "%s/users/%s/save.json?auth=%s" % [DB_URL, local_id, id_token]
 
 	var request = HTTPRequest.new()
 	add_child(request)
 
-	request.request(url) # GET por defecto
-
-	request.connect("request_completed", Callable(self, "_on_download_response"))
+	request.request_completed.connect(_on_download_response)
+	request.request(url)
 
 
 func _on_download_response(result, response_code, headers, body):
@@ -61,11 +61,14 @@ func _on_download_response(result, response_code, headers, body):
 		File.new_game()
 		upload_save()
 
+
 func upload_save() -> void:
 	var url = "%s/users/%s/save.json?auth=%s" % [DB_URL, local_id, id_token]
 
 	var request = HTTPRequest.new()
 	add_child(request)
+
+	request.request_completed.connect(_on_upload_response)
 
 	request.request(
 		url,
@@ -73,8 +76,6 @@ func upload_save() -> void:
 		HTTPClient.METHOD_PUT,
 		JSON.stringify(File.data)
 	)
-
-	request.connect("request_completed", Callable(self, "_on_upload_response"))
 
 
 func _on_upload_response(result, response_code, headers, body):
