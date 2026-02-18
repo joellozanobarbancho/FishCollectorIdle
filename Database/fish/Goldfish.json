@@ -1,9 +1,9 @@
 {
-    "id": 5,
-    "name": "Goldfish",
-    "rarity": 1,
-    "size": 1,
-    "type": "Fresh water",
-    "habitat": "River",
-    "description": ""
+	"id": 5,
+	"name": "Goldfish",
+	"rarity": 1,
+	"size": 1,
+	"type": "Fresh water",
+	"habitat": "River",
+	"description": ""
 }
