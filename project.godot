@@ -17,6 +17,10 @@ config/icon="res://icon.svg"
 [autoload]
 
 Firebase="*uid://cvb26atjckwlq"
+File="*uid://i0yltmn4s0cb"
+FishManager="*uid://b8e2dx32msexg"
+InventoryManager="*uid://bb6162tobtjsf"
+FirebaseManager="*uid://dg6cbnryipgge"
 
 [editor_plugins]
 
