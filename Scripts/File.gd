@@ -13,8 +13,23 @@ func new_game() -> void:
 			"email": "",
 			"createdAt": Time.get_datetime_string_from_system(),
 			"inventory": [],
-			"coins": 0
+			"coins": 0,
+
+			"base_stats": {
+				"fishing_cooldown": 20.0,
+				"fishing_speed": 15.0,
+				"chest_chance": 1.0,
+				"trade_cooldown": 60.0,
+				"can_autosell": false,
+				"rare_fish_chance": 0.0,
+				"xp_multiplier": 1.0
+			},
+
+			"current_stats": {},
+
+			"upgrades_owned": []
 		},
+
 		"world_state": {}
 	}
 
@@ -35,6 +50,7 @@ func load_game() -> void:
 
 		if typeof(parsed) == TYPE_DICTIONARY:
 			data = parsed
+			#falta aplicar mejoras, logros, etc
 		else:
 			push_error("Error al parsear el JSON")
 	else:
