@@ -18,9 +18,10 @@ config/icon="res://icon.svg"
 
 Firebase="*uid://cvb26atjckwlq"
 File="*uid://i0yltmn4s0cb"
-FishManager="*uid://b8e2dx32msexg"
 InventoryManager="*uid://bb6162tobtjsf"
 FirebaseManager="*uid://dg6cbnryipgge"
+UpgradeManager="*uid://b8yods8fd6fbs"
+DataManager="*uid://b8e2dx32msexg"
 
 [editor_plugins]
 

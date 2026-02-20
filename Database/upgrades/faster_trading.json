@@ -1,0 +1,8 @@
+{
+    "upgrade_id": 3,
+    "upgrade_name": "Faster Trading I",
+    "upgrade_cost": 100,
+    "upgrade_effect": {
+        "trade_cooldown": -10
+    }
+}

@@ -1,0 +1,8 @@
+{
+    "upgrade_id": 2,
+    "upgrade_name": "Faster Fishing I",
+    "upgrade_cost": 20,
+    "upgrade_effect": {
+        "fishing_speed": -5
+    }
+}
