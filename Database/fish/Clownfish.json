@@ -1,9 +1,10 @@
 {
-    "id": 2,
-    "name": "Clownfish",
-    "rarity": 1,
-    "size": 3,
-    "type": "Salt water",
-    "habitat": "Sea",
-    "description": ""
+	"id": 2,
+	"name": "Clownfish",
+	"rarity": 1,
+	"type": "Salt water",
+	"habitat": "Sea",
+	"description": "",
+	"size": { "min": 10, "max": 25 },
+	"value": { "min": 1, "max": 5 }
 }

@@ -1,9 +1,10 @@
 {
-    "id": 7,
-    "name": "Catfish",
-    "rarity": 2,
-    "size": 2,
-    "type": "Fresh water",
-    "habitat": "River",
-    "description": ""
+	"id": 7,
+	"name": "Catfish",
+	"rarity": 2,
+	"type": "Fresh water",
+	"habitat": "River",
+	"description": "",
+	"size": { "min": 10, "max": 25 },
+	"value": { "min": 5, "max": 10 }
 }

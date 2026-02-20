@@ -1,9 +1,10 @@
 {
-    "id": 9,
-    "name": "Surgeonfish",
-    "rarity": 2,
-    "size": 1,
-    "type": "Salt water",
-    "habitat": "Sea",
-    "description": ""
+	"id": 9,
+	"name": "Surgeonfish",
+	"rarity": 2,
+	"type": "Salt water",
+	"habitat": "Sea",
+	"description": "",
+	"size": { "min": 10, "max": 25 },
+	"value": { "min": 5, "max": 10 }
 }

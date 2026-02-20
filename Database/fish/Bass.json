@@ -1,9 +1,10 @@
 {
-    "id": 6,
-    "name": "Bass",
-    "rarity": 1,
-    "size": 2,
-    "type": "Fresh water",
-    "habitat": "River",
-    "description": ""
+	"id": 6,
+	"name": "Bass",
+	"rarity": 1,
+	"type": "Fresh water",
+	"habitat": "River",
+	"description": "",
+	"size": { "min": 10, "max": 25 },
+	"value": { "min": 1, "max": 5 }
 }

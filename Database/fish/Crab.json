@@ -1,9 +1,10 @@
 {
-    "id": 3,
-    "name": "Crab",
-    "rarity": 3,
-    "size": 3,
-    "type": "Salt water",
-    "habitat": "Sea",
-    "description": ""    
+	"id": 3,
+	"name": "Crab",
+	"rarity": 3,
+	"type": "Salt water",
+	"habitat": "Sea",
+	"description": "",
+	"size": { "min": 10, "max": 25 },
+	"value": { "min": 25, "max": 50 }
 }
