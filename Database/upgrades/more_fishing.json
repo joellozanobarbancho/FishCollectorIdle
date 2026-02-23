@@ -3,6 +3,6 @@
 	"upgrade_name": "More Fishing I",
 	"upgrade_cost": 10,
 	"upgrade_effect": {
-		"fishing_cooldown": -5
+	"fishing_stamina": 50
 	}
 }

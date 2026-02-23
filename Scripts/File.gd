@@ -16,7 +16,8 @@ func new_game() -> void:
 			"coins": 0,
 
 			"base_stats": {
-				"fishing_cooldown": 20.0,
+				"fishing_stamina": 100.0,
+				"fishing_stamina_regen": 0.1,
 				"fishing_speed": 15.0,
 				"chest_chance": 1.0,
 				"trade_cooldown": 60.0,
