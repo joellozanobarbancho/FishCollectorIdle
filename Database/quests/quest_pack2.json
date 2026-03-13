@@ -1,0 +1,58 @@
+[
+    {
+        "id": 8,
+        "name": "Skilled Angler",
+        "description": "Catch 100 fish.",
+        "reward": {
+            "coins": 100
+        }
+    },
+    {
+        "id": 9,
+        "name": "Master Fisherman",
+        "description": "Catch 500 fish",
+        "reward": {
+            "coins": 200
+        }
+    },
+    {
+        "id": 10,
+        "name": "Legendary Catch",
+        "description": "Catch a legendary fish",
+        "reward": {
+            "coins": 500
+        }
+    },
+    {
+        "id": 11,
+        "name": "Wealthy Angler",
+        "description": "Earn 500 coins",
+        "reward": {
+            "coins": 300
+        }
+    },
+    {
+        "id": 12,
+        "name": "Level Master",
+        "description": "Reach level 10",
+        "reward": {
+            "coins": 400
+        }
+    },
+    {
+        "id": 13,
+        "name": "Fish Collector",
+        "description": "Sell 10 different fish",
+        "reward": {
+            "coins": 400
+        }
+    },
+    {
+        "id": 14,
+        "name": "Quest Master",
+        "description": "Complete all quests in Quest Pack 2",
+        "reward": {
+            "coins": 500
+        }
+    }
+]

@@ -1,0 +1,42 @@
+[
+	{
+		"id": "river",
+		"name": "River",
+		"description": "Starter zone with predictable fish and balanced rewards",
+		"habitat": "River",
+		"rarity_multiplier": 1.0,
+		"xp_multiplier": 1.0
+	},
+    {
+		"id": "strong_river",
+		"name": "Strong River",
+		"description": "Difficult zone with powerful fish and significant rewards",
+		"habitat": "River",
+		"rarity_multiplier": 1.5,
+		"xp_multiplier": 1.5
+	},
+	{
+		"id": "sea",
+		"name": "Sea",
+		"description": "Starter zone with predictable fish and balanced rewards",
+		"habitat": "Sea",
+		"rarity_multiplier": 1.0,
+		"xp_multiplier": 1.0
+	},
+	{
+		"id": "deep_sea",
+		"name": "Deep Sea",
+		"description": "High difficulty zone with very rare encounters and high XP gains",
+		"habitat": "Sea",
+		"rarity_multiplier": 1.5,
+		"xp_multiplier": 1.5
+	},
+    {
+        "id": "mystic_lake",
+        "name": "Mystic Lake",
+        "description": "Enchanted zone with all kinds of fish and exceptional rewards",
+        "habitat": "All",
+        "rarity_multiplier": 2.0,
+        "xp_multiplier": 2.0
+    }
+]

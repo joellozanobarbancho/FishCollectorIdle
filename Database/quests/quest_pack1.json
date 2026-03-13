@@ -1,0 +1,60 @@
+[
+    {
+        "id": 1,
+        "name": "First Catch!",
+        "description": "Catch your first fish",
+        "reward": {
+            "coins": 50
+        }
+    },
+    {
+        "id": 2,
+        "name": "Fisherman's Apprentice",
+        "description": "Catch 10 fish",
+        "reward": {
+            "coins": 50
+        }
+    },
+    {
+        "id": 3,
+        "name": "Rare Hunter",
+        "description": "Catch a rare fish",
+        "reward": {
+            "coins": 100
+        }
+    },
+    {
+        "id": 4,
+        "name": "Coin collector",
+        "description": "Earn 100 coins",
+        "reward": {
+            "coins": 200
+        }
+    },
+    {
+        "id": 5,
+        "name": "Leveled Up!",
+        "description": "Reach level 5",
+        "reward": {
+            "flags": {
+                "social_features_enabled": true
+            }
+        }
+    },
+    {
+        "id": 6,
+        "name": "Diverse Catch",
+        "description": "Sell 5 different fish",
+        "reward": {
+            "coins": 200
+        }
+    },
+    {
+        "id": 7,
+        "name": "Quest enjoyer",
+        "description": "Complete 5 quests",
+        "reward": {
+            "coins": 300
+        }
+    }
+]

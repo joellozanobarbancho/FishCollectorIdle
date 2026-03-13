@@ -6,5 +6,7 @@
 	"habitat": "Sea",
 	"description": "",
 	"size": { "min": 10, "max": 25 },
-	"value": { "min": 25, "max": 50 }
+	"value": { "min": 25, "max": 50 },
+	"xp_on_catch": 10,
+	"trigger_minigame": true
 }
