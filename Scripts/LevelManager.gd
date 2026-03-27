@@ -8,16 +8,16 @@ func add_xp(base_amount: int) -> void:
 	if base_amount <= 0:
 		return
 
-	var multiplier: float = File.data["player"]["current_stats"].get("xp_multiplier", 1.0)
+	var multiplier: float = Data.save_data["player"]["current_stats"].get("xp_multiplier", 1.0)
 	var gained := int(base_amount * multiplier)
-	File.data["player"]["xp"] += gained
+	Data.save_data["player"]["xp"] += gained
 	_check_level_up()
 	_emit_xp_changed()
 
 
 func _check_level_up() -> void:
-	var current_level: int = File.data["player"]["level"]
-	var current_xp: int = File.data["player"]["xp"]
+	var current_level: int = Data.save_data["player"]["level"]
+	var current_xp: int = Data.save_data["player"]["xp"]
 	var next_level := current_level + 1
 
 	var next_level_data = DataManager.levels_db.get(next_level)
@@ -25,12 +25,11 @@ func _check_level_up() -> void:
 		return
 
 	if current_xp >= next_level_data["xp_required"]:
-		File.data["player"]["level"] = next_level
+		Data.save_data["player"]["level"] = next_level
 
 		emit_signal("level_up", next_level)
 
 		File.save_game()
-		FirebaseManager.upload_save()
 
 		_check_level_up()
 
@@ -54,8 +53,8 @@ func get_max_level() -> int:
 
 
 func get_level_progress() -> Dictionary:
-	var level: int = File.data["player"].get("level", 1)
-	var xp: int = File.data["player"].get("xp", 0)
+	var level: int = Data.save_data["player"].get("level", 1)
+	var xp: int = Data.save_data["player"].get("xp", 0)
 	var current_level_xp := get_xp_for_level(level)
 	var next_level_xp := get_xp_for_level(level + 1)
 
@@ -68,8 +67,8 @@ func get_level_progress() -> Dictionary:
 			"progress": 1.0
 		}
 
-	var span := max(next_level_xp - current_level_xp, 1)
-	var progress_value := clamp(float(xp - current_level_xp) / float(span), 0.0, 1.0)
+	var span: int = max(next_level_xp - current_level_xp, 1)
+	var progress_value: float = clamp(float(xp - current_level_xp) / float(span), 0.0, 1.0)
 
 	return {
 		"level": level,

@@ -192,7 +192,7 @@ func get_fish_weight_for_location(fish_data: Dictionary, location_id: String) ->
 		if zone_habitat != "Any" and fish_habitat != zone_habitat:
 			return 0.0
 
-	var rarity_value := max(float(fish_data.get("rarity", 1.0)), 1.0)
+	var rarity_value: float = max(float(fish_data.get("rarity", 1.0)), 1.0)
 	var rarity_multiplier := get_location_rarity_multiplier(location_id)
 	return 1.0 / pow(rarity_value, rarity_multiplier)
 

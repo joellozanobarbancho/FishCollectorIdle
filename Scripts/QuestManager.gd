@@ -10,7 +10,7 @@ func claim_quest(quest_id: int) -> bool:
 	if quest == null:
 		return false
 
-	var achievements: Array = File.data["player"].get("achievements", [])
+	var achievements: Array = Data.save_data["player"].get("achievements", [])
 	if achievements.any(func(a): return a.get("quest_id") == quest_id):
 		return false
 
@@ -19,10 +19,10 @@ func claim_quest(quest_id: int) -> bool:
 		reward = {}
 
 	if reward.has("coins") and _is_numeric(reward["coins"]):
-		File.data["player"]["coins"] += reward["coins"]
+		Data.save_data["player"]["coins"] += reward["coins"]
 
 	if reward.has("stats") and typeof(reward["stats"]) == TYPE_DICTIONARY:
-		var base_stats: Dictionary = File.data["player"]["base_stats"]
+		var base_stats: Dictionary = Data.save_data["player"]["base_stats"]
 		for stat_key in reward["stats"].keys():
 			var stat_value = reward["stats"][stat_key]
 			if not _is_numeric(stat_value):
@@ -36,7 +36,7 @@ func claim_quest(quest_id: int) -> bool:
 		for flag_key in reward["flags"].keys():
 			var flag_value = reward["flags"][flag_key]
 			if typeof(flag_value) == TYPE_BOOL:
-				File.data["player"][flag_key] = flag_value
+				Data.save_data["player"][flag_key] = flag_value
 
 	achievements.append({
 		"quest_id": quest_id,
@@ -44,9 +44,8 @@ func claim_quest(quest_id: int) -> bool:
 		"description": quest.get("description", ""),
 		"unlocked_at": Time.get_datetime_string_from_system()
 	})
-	File.data["player"]["achievements"] = achievements
+	Data.save_data["player"]["achievements"] = achievements
 
 	File.save_game()
-	FirebaseManager.upload_save()
 
 	return true

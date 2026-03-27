@@ -1,1 +1,3 @@
-class_name data extends Resource
+extends Node
+
+var save_data: Dictionary = {}

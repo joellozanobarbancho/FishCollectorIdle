@@ -1,11 +1,11 @@
 extends Node
 
 func get_inventory() -> Array:
-	return File.data["player"]["inventory"]
+	return Data.save_data["player"]["inventory"]
 
 func add_fish(fish_id: int, size: int, value: int, location_id: String = "") -> void:
 	if location_id == "":
-		location_id = String(File.data["player"].get("current_location", "river_bank"))
+		location_id = String(Data.save_data["player"].get("current_location", "river_bank"))
 
 	var entry = {
 		"fish_id": fish_id,
@@ -15,7 +15,7 @@ func add_fish(fish_id: int, size: int, value: int, location_id: String = "") -> 
 		"caught_at": Time.get_datetime_string_from_system()
 	}
 
-	File.data["player"]["inventory"].append(entry)
+	Data.save_data["player"]["inventory"].append(entry)
 
 	var fish_data: Dictionary = DataManager.fish_db.get(fish_id, {})
 	var xp_on_catch := 0
@@ -29,22 +29,19 @@ func add_fish(fish_id: int, size: int, value: int, location_id: String = "") -> 
 		LevelManager.add_xp(xp_on_catch)
 
 	File.save_game()
-	FirebaseManager.upload_save()
 
 func remove_fish(index: int) -> void:
-	var inv = File.data["player"]["inventory"]
+	var inv = Data.save_data["player"]["inventory"]
 	if index >= 0 and index < inv.size():
 		inv.remove_at(index)
 		File.save_game()
-		FirebaseManager.upload_save()
 
 func clear_inventory() -> void:
-	File.data["player"]["inventory"].clear()
+	Data.save_data["player"]["inventory"].clear()
 	File.save_game()
-	FirebaseManager.upload_save()
 
 func get_total_value() -> int:
 	var total := 0
-	for item in File.data["player"]["inventory"]:
+	for item in Data.save_data["player"]["inventory"]:
 		total += item["value"]
 	return total

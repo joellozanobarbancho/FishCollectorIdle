@@ -2,11 +2,10 @@ extends Node
 
 const SAVE_PATH := "user://save.json"
 
-var data: Dictionary = {}
 var access: FileAccess
 
 func new_game() -> void:
-	data = {
+	Data.save_data = {
 		"player": {
 			"id": 1,
 			"name": "default_player",
@@ -42,7 +41,7 @@ func new_game() -> void:
 
 func save_game() -> void:
 	access = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	access.store_string(JSON.stringify(data, "\t"))
+	access.store_string(JSON.stringify(Data.save_data, "\t"))
 	access.close()
 
 func load_game() -> void:
@@ -54,23 +53,23 @@ func load_game() -> void:
 		var parsed: Variant = JSON.parse_string(text)
 
 		if typeof(parsed) == TYPE_DICTIONARY:
-			data = parsed
-			if not data.has("player"):
-				data["player"] = {}
-			if not data["player"].has("current_location"):
-				data["player"]["current_location"] = "river_bank"
-			if not data["player"].has("xp"):
-				data["player"]["xp"] = 0
-			if not data["player"].has("level"):
-				data["player"]["level"] = 1
-			if not data["player"].has("social_features_enabled"):
-				data["player"]["social_features_enabled"] = false
-			if not data["player"].has("current_stats"):
-				data["player"]["current_stats"] = {}
-			if not data["player"].has("items_owned"):
-				data["player"]["items_owned"] = {}
-			if not data["player"].has("achievements"):
-				data["player"]["achievements"] = []
+			Data.save_data = parsed
+			if not Data.save_data.has("player"):
+				Data.save_data["player"] = {}
+			if not Data.save_data["player"].has("current_location"):
+				Data.save_data["player"]["current_location"] = "river_bank"
+			if not Data.save_data["player"].has("xp"):
+				Data.save_data["player"]["xp"] = 0
+			if not Data.save_data["player"].has("level"):
+				Data.save_data["player"]["level"] = 1
+			if not Data.save_data["player"].has("social_features_enabled"):
+				Data.save_data["player"]["social_features_enabled"] = false
+			if not Data.save_data["player"].has("current_stats"):
+				Data.save_data["player"]["current_stats"] = {}
+			if not Data.save_data["player"].has("items_owned"):
+				Data.save_data["player"]["items_owned"] = {}
+			if not Data.save_data["player"].has("achievements"):
+				Data.save_data["player"]["achievements"] = []
 			#falta aplicar mejoras, logros, etc
 		else:
 			push_error("Error al parsear el JSON")
