@@ -34,6 +34,30 @@ func register(email: String, password: String) -> bool:
 	return await _authenticate(email, password, true)
 
 
+func send_password_reset_email(email: String) -> bool:
+	last_auth_error = ""
+	var url := "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=%s" % API_KEY
+	var body := {
+		"requestType": "PASSWORD_RESET",
+		"email": email
+	}
+	var response: Dictionary = await _request_json(
+		HTTPClient.METHOD_POST,
+		url,
+		JSON.stringify(body),
+		PackedStringArray(["Content-Type: application/json"])
+	)
+
+	if not response["ok"]:
+		last_auth_error = String(response["message"])
+		auth_failed.emit(last_auth_error)
+		print("Error sending password reset email:", last_auth_error)
+		return false
+
+	print("Password reset email sent for:", email)
+	return true
+
+
 func _authenticate(email: String, password: String, is_signup: bool) -> bool:
 	last_auth_error = ""
 	var endpoint := "accounts:signUp" if is_signup else "accounts:signInWithPassword"

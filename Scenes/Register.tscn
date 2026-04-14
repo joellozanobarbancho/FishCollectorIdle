@@ -1,9 +1,21 @@
-[gd_scene load_steps=3 format=3 uid="uid://dyqe2kj2q4d6r"]
+[gd_scene format=3 uid="uid://dyqe2kj2q4d6r"]
 
 [ext_resource type="Texture2D" uid="uid://dk1pqihteefbi" path="res://Assets/UIElements/background.png" id="1_g6fiq"]
-[ext_resource type="Script" path="res://Scripts/RegisterScreen.gd" id="2_t4sn7"]
+[ext_resource type="Script" uid="uid://deon6m4h5s0ji" path="res://Scripts/RegisterScreen.gd" id="2_t4sn7"]
 
-[node name="Register" type="Control"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_auth_card"]
+bg_color = Color(1, 1, 1, 0.08)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.22)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[node name="Register" type="Control" unique_id=302787339]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -12,70 +24,134 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_t4sn7")
 
-[node name="NinePatchRect" type="NinePatchRect" parent="." unique_id=103944847]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -161.0
-offset_top = -324.0
-offset_right = 161.0
-offset_bottom = 324.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("1_g6fiq")
-
-[node name="MarginContainer" type="MarginContainer" parent="NinePatchRect" unique_id=1015827237]
+[node name="SceneBg" type="TextureRect" parent="." unique_id=530091107]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 30
-theme_override_constants/margin_top = 280
-theme_override_constants/margin_right = 30
-theme_override_constants/margin_bottom = 100
+mouse_filter = 2
+texture = ExtResource("1_g6fiq")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="VBoxContainer" type="VBoxContainer" parent="NinePatchRect/MarginContainer" unique_id=588560662]
+[node name="PopupOverlay" type="ColorRect" parent="." unique_id=1402998700]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.45)
+
+[node name="CatchPopup" type="PanelContainer" parent="." unique_id=596064759]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -170.0
+offset_top = -50.0
+offset_right = 170.0
+offset_bottom = 50.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PopupMargin" type="MarginContainer" parent="CatchPopup" unique_id=383588123]
 layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 16
 
-[node name="EmailTitle" type="Label" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+[node name="PopupLabel" type="Label" parent="CatchPopup/PopupMargin" unique_id=815253492]
+layout_mode = 2
+text = "Account created successfully!"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="BackToHomeButton" type="Button" parent="." unique_id=930678176]
+layout_mode = 1
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 46.0
+offset_bottom = 46.0
+theme_override_font_sizes/font_size = 22
+text = "←"
+flat = true
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1971837766]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="AuthCard" type="PanelContainer" parent="CenterContainer" unique_id=2129675153]
+custom_minimum_size = Vector2(191, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_auth_card")
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/AuthCard" unique_id=1476766498]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/AuthCard/MarginContainer" unique_id=1866572354]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="EmailTitle" type="Label" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=1794337293]
 layout_mode = 2
 text = "Email:"
 
-[node name="Email" type="LineEdit" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+[node name="Email" type="LineEdit" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=1743021687]
 layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Enter email"
 
-[node name="UsernameTitle" type="Label" parent="NinePatchRect/MarginContainer/VBoxContainer" unique_id=1494988512]
+[node name="UsernameTitle" type="Label" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=638838140]
 layout_mode = 2
 text = "Username:"
 
-[node name="Username" type="LineEdit" parent="NinePatchRect/MarginContainer/VBoxContainer" unique_id=1064806684]
+[node name="Username" type="LineEdit" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=38911247]
 layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Choose a username"
 
-[node name="PasswordTitle" type="Label" parent="NinePatchRect/MarginContainer/VBoxContainer" unique_id=432088395]
+[node name="PasswordTitle" type="Label" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=500147973]
 layout_mode = 2
 text = "Password:"
 
-[node name="Password" type="LineEdit" parent="NinePatchRect/MarginContainer/VBoxContainer" unique_id=717149840]
+[node name="Password" type="LineEdit" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=719796592]
 layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Your password"
+secret = true
 
-[node name="ConfirmPasswordTitle" type="Label" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+[node name="ConfirmPasswordTitle" type="Label" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=504773700]
 layout_mode = 2
 text = "Confirm password:"
 
-[node name="ConfirmPassword" type="LineEdit" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+[node name="ConfirmPassword" type="LineEdit" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=658636265]
 layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Confirm password"
+secret = true
 
-[node name="RegisterButton" type="Button" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+[node name="RegisterButton" type="Button" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=1620380820]
 layout_mode = 2
-text = "Register"
+size_flags_horizontal = 3
+text = "Create Account"
 
-[node name="StatusLabel" type="Label" parent="NinePatchRect/MarginContainer/VBoxContainer"]
-layout_mode = 2
-autowrap_mode = 3
-
-[connection signal="pressed" from="NinePatchRect/MarginContainer/VBoxContainer/RegisterButton" to="." method="_on_register_button_pressed"]
+[connection signal="pressed" from="BackToHomeButton" to="." method="_on_back_to_home_button_pressed"]
+[connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/RegisterButton" to="." method="_on_register_button_pressed"]

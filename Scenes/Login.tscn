@@ -1,9 +1,53 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://cph0c7268wpye"]
 
 [ext_resource type="Texture2D" uid="uid://dk1pqihteefbi" path="res://Assets/UIElements/background.png" id="1_g6fiq"]
-[ext_resource type="Script" path="res://Scripts/LoginScreen.gd" id="2_sx7m1"]
+[ext_resource type="Script" uid="uid://drf0ym3rrwku1" path="res://Scripts/LoginScreen.gd" id="2_sx7m1"]
 
-[node name="Login" type="Control"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_auth_card"]
+bg_color = Color(1, 1, 1, 0.08)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.22)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_link_button"]
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.64, 1, 0.6)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_link_button_hover"]
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.2, 0.45, 0.9, 0.14)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.72, 1, 0.9)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="Login" type="Control" unique_id=955846762]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -12,56 +56,87 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_sx7m1")
 
-[node name="NinePatchRect" type="NinePatchRect" parent="."]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -161.0
-offset_top = -324.0
-offset_right = 161.0
-offset_bottom = 324.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("1_g6fiq")
-
-[node name="MarginContainer" type="MarginContainer" parent="NinePatchRect"]
+[node name="SceneBg" type="TextureRect" parent="." unique_id=1932584040]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 30
-theme_override_constants/margin_top = 280
-theme_override_constants/margin_right = 30
-theme_override_constants/margin_bottom = 100
+mouse_filter = 2
+texture = ExtResource("1_g6fiq")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="VBoxContainer" type="VBoxContainer" parent="NinePatchRect/MarginContainer"]
+[node name="BackToHomeButton" type="Button" parent="." unique_id=400077034]
+layout_mode = 1
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 46.0
+offset_bottom = 46.0
+theme_override_font_sizes/font_size = 22
+text = "←"
+flat = true
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=709278563]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="AuthCard" type="PanelContainer" parent="CenterContainer" unique_id=759855269]
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_auth_card")
 
-[node name="EmailTitle" type="Label" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/AuthCard" unique_id=866735402]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/AuthCard/MarginContainer" unique_id=730198366]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="EmailTitle" type="Label" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=658560395]
 layout_mode = 2
 text = "Email:"
 
-[node name="Email" type="LineEdit" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+[node name="Email" type="LineEdit" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=127242856]
 layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Enter email"
 
-[node name="PasswordTitle" type="Label" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+[node name="PasswordTitle" type="Label" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=1493137861]
 layout_mode = 2
 text = "Password:"
 
-[node name="Password" type="LineEdit" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+[node name="Password" type="LineEdit" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=896655098]
 layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Your password"
+secret = true
 
-[node name="LoginButton" type="Button" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+[node name="LoginButton" type="Button" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=1641594649]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Login"
 
-[node name="StatusLabel" type="Label" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+[node name="ForgotPasswordButton" type="Button" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=972853916]
 layout_mode = 2
-autowrap_mode = 3
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.42, 0.7, 1, 1)
+theme_override_colors/font_hover_color = Color(0.6, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_link_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_link_button_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_link_button_hover")
+text = "Forgot your password?"
+flat = true
 
-[connection signal="pressed" from="NinePatchRect/MarginContainer/VBoxContainer/LoginButton" to="." method="_on_login_button_pressed"]
+[connection signal="pressed" from="BackToHomeButton" to="." method="_on_back_to_home_button_pressed"]
+[connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/LoginButton" to="." method="_on_login_button_pressed"]
+[connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/ForgotPasswordButton" to="." method="_on_forgot_password_button_pressed"]
