@@ -9,6 +9,7 @@ const MIN_CAST_INTERVAL: float = 0.15
 @onready var stamina_label: Label = $Panel/MarginContainer/VBoxContainer/StaminaLabel
 @onready var fish_button: Button = $Panel/MarginContainer/VBoxContainer/FishButton
 @onready var result_label: Label = $Panel/MarginContainer/VBoxContainer/ResultLabel
+@onready var inventory_dropdown: Control = $InventoryDropdown
 
 var cast_cooldown_remaining: float = 0.0
 var stamina: float = 100.0
@@ -21,6 +22,7 @@ func _ready() -> void:
 		File.load_game()
 	_ensure_player_defaults()
 	_pull_stamina_from_stats()
+	inventory_dropdown.visible = false
 	_refresh_ui("Ready to fish.")
 
 
@@ -86,6 +88,10 @@ func _on_fish_button_pressed() -> void:
 
 	var rarity_text: String = " (Rare!)" if is_rare else ""
 	_refresh_ui("Caught %s%s - Size %d, +%d coins" % [fish_name, rarity_text, fish_size, value])
+
+
+func _on_inventory_button_pressed() -> void:
+	inventory_dropdown.visible = not inventory_dropdown.visible
 
 
 func _roll_from_range(range_data: Dictionary, fallback_min: int, fallback_max: int) -> int:
