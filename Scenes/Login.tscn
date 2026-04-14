@@ -125,6 +125,10 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "Login"
 
+[node name="StatusLabel" type="Label" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer"]
+layout_mode = 2
+autowrap_mode = 3
+
 [node name="ForgotPasswordButton" type="Button" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=972853916]
 layout_mode = 2
 size_flags_horizontal = 4

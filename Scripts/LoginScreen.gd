@@ -7,6 +7,8 @@ const HOME_SCENE_PATH := "res://Scenes/MainMenu.tscn"
 @onready var email_input: LineEdit = $CenterContainer/AuthCard/MarginContainer/VBoxContainer/Email
 @onready var password_input: LineEdit = $CenterContainer/AuthCard/MarginContainer/VBoxContainer/Password
 @onready var login_button: Button = $CenterContainer/AuthCard/MarginContainer/VBoxContainer/LoginButton
+@onready var status_label: Label = $CenterContainer/AuthCard/MarginContainer/VBoxContainer/StatusLabel
+
 
 func _ready() -> void:
 	password_input.secret = true
@@ -31,6 +33,7 @@ func _on_login_button_pressed() -> void:
 
 	var login_ok: bool = await FirebaseManager.login(email, password)
 	if login_ok:
+		status_label.text = "Login successful"
 		get_tree().change_scene_to_file(FISHING_SCENE_PATH)
 		return
 
