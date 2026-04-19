@@ -4,7 +4,11 @@ const API_KEY := "AIzaSyAN9OshKt3fPcqoJZB1ZZM-OQxVmlrZgcs"
 const PROJECT_ID := "fishcollector-idle"
 const FIRESTORE_BASE_URL := "https://firestore.googleapis.com/v1"
 const SAVE_COLLECTION := "user_saves"
+const CHAT_COLLECTION := "global_chat_messages"
+const PRESENCE_COLLECTION := "online_presence"
+const MAX_CHAT_MESSAGE_LENGTH := 180
 const FIRESTORE_RULES_HINT := "Set Firestore Rules for user_saves/{userId}: allow read, write: if request.auth != null && request.auth.uid == userId;"
+const CHAT_FIRESTORE_RULES_HINT := "Allow authenticated users on global_chat_messages and online_presence collections in Firestore Rules."
 
 signal auth_succeeded(user_id: String)
 signal auth_failed(message: String)
@@ -16,6 +20,8 @@ var local_id: String = ""
 var user_email: String = ""
 var last_auth_error: String = ""
 var _quitting: bool = false
+var _chat_permission_blocked: bool = false
+var _chat_permission_logged_once: bool = false
 
 
 func _ready() -> void:
@@ -24,6 +30,18 @@ func _ready() -> void:
 
 func is_authenticated() -> bool:
 	return not id_token.is_empty() and not local_id.is_empty()
+
+
+func can_use_chat_features() -> bool:
+	return is_authenticated() and not _chat_permission_blocked
+
+
+func is_chat_permission_blocked() -> bool:
+	return _chat_permission_blocked
+
+
+func get_chat_rules_hint() -> String:
+	return CHAT_FIRESTORE_RULES_HINT
 
 
 func login(email: String, password: String) -> bool:
@@ -84,6 +102,8 @@ func _authenticate(email: String, password: String, is_signup: bool) -> bool:
 	id_token = String(json.get("idToken", ""))
 	local_id = String(json.get("localId", ""))
 	user_email = String(json.get("email", email))
+	_chat_permission_blocked = false
+	_chat_permission_logged_once = false
 
 	if id_token.is_empty() or local_id.is_empty():
 		last_auth_error = "Auth response missing idToken/localId"
@@ -130,6 +150,183 @@ func _auth_headers() -> PackedStringArray:
 		"Content-Type: application/json",
 		"Authorization: Bearer %s" % id_token
 	])
+
+
+func _firestore_collection_url(collection_name: String) -> String:
+	return "%s/projects/%s/databases/(default)/documents/%s" % [
+		FIRESTORE_BASE_URL,
+		PROJECT_ID,
+		collection_name
+	]
+
+
+func _firestore_collection_document_url(collection_name: String, document_id: String) -> String:
+	return "%s/projects/%s/databases/(default)/documents/%s/%s" % [
+		FIRESTORE_BASE_URL,
+		PROJECT_ID,
+		collection_name,
+		document_id
+	]
+
+
+func send_global_chat_message(message_text: String, player_name: String) -> bool:
+	if not can_use_chat_features():
+		return false
+
+	var trimmed_message: String = message_text.strip_edges()
+	if trimmed_message.is_empty():
+		return false
+
+	if trimmed_message.length() > MAX_CHAT_MESSAGE_LENGTH:
+		trimmed_message = trimmed_message.substr(0, MAX_CHAT_MESSAGE_LENGTH)
+
+	var unix_time: int = int(Time.get_unix_time_from_system())
+	var document_id: String = "%s_%d_%d" % [local_id, unix_time, randi_range(1000, 9999)]
+	var payload := {
+		"uid": local_id,
+		"player_name": player_name,
+		"message": trimmed_message,
+		"created_at_unix": unix_time,
+		"created_at_iso": Time.get_datetime_string_from_system()
+	}
+
+	var response: Dictionary = await _request_json(
+		HTTPClient.METHOD_PATCH,
+		_firestore_collection_document_url(CHAT_COLLECTION, document_id),
+		JSON.stringify(Utilities.dict2fields(payload)),
+		_auth_headers()
+	)
+
+	if response["ok"]:
+		return true
+
+	if _is_permission_error(response):
+		_mark_chat_permission_error_once("No se pudo enviar chat")
+		return false
+
+	print("Error al enviar chat:", response["message"])
+	return false
+
+
+func fetch_recent_global_chat_messages(limit: int = 30) -> Array:
+	var safe_limit: int = clamp(limit, 1, 100)
+	if not can_use_chat_features():
+		return []
+
+	var url: String = "%s?pageSize=%d&orderBy=created_at_unix%%20desc" % [
+		_firestore_collection_url(CHAT_COLLECTION),
+		safe_limit
+	]
+
+	var response: Dictionary = await _request_json(
+		HTTPClient.METHOD_GET,
+		url,
+		"",
+		_auth_headers()
+	)
+
+	if not response["ok"]:
+		if _is_permission_error(response):
+			_mark_chat_permission_error_once("No se pudo leer chat")
+			return []
+		if int(response["code"]) != 404:
+			print("Error al leer chat:", response["message"])
+		return []
+
+	var json: Dictionary = response["json"]
+	if not json.has("documents") or typeof(json["documents"]) != TYPE_ARRAY:
+		return []
+
+	var messages: Array = []
+	for doc_variant in json["documents"]:
+		if typeof(doc_variant) != TYPE_DICTIONARY:
+			continue
+		var doc: Dictionary = doc_variant
+		var parsed: Dictionary = Utilities.fields2dict(doc)
+		if parsed.is_empty():
+			continue
+		messages.append(parsed)
+
+	return messages
+
+
+func update_chat_presence(player_name: String) -> void:
+	if not can_use_chat_features():
+		return
+
+	var payload := {
+		"uid": local_id,
+		"player_name": player_name,
+		"last_seen_unix": int(Time.get_unix_time_from_system()),
+		"last_seen_iso": Time.get_datetime_string_from_system()
+	}
+
+	var response: Dictionary = await _request_json(
+		HTTPClient.METHOD_PATCH,
+		_firestore_collection_document_url(PRESENCE_COLLECTION, local_id),
+		JSON.stringify(Utilities.dict2fields(payload)),
+		_auth_headers()
+	)
+
+	if not response["ok"] and _is_permission_error(response):
+		_mark_chat_permission_error_once("No se pudo actualizar presencia")
+		return
+
+	if not response["ok"] and int(response["code"]) != 404:
+		print("Error al actualizar presencia:", response["message"])
+
+
+func fetch_online_users_count(active_window_seconds: int = 90, max_docs: int = 100) -> int:
+	if not can_use_chat_features():
+		return 0
+
+	var safe_max_docs: int = clamp(max_docs, 1, 200)
+	var url: String = "%s?pageSize=%d&orderBy=last_seen_unix%%20desc" % [
+		_firestore_collection_url(PRESENCE_COLLECTION),
+		safe_max_docs
+	]
+
+	var response: Dictionary = await _request_json(
+		HTTPClient.METHOD_GET,
+		url,
+		"",
+		_auth_headers()
+	)
+
+	if not response["ok"]:
+		if _is_permission_error(response):
+			_mark_chat_permission_error_once("No se pudo leer presencia")
+			return 0
+		if int(response["code"]) != 404:
+			print("Error al leer presencia:", response["message"])
+		return 0
+
+	var json: Dictionary = response["json"]
+	if not json.has("documents") or typeof(json["documents"]) != TYPE_ARRAY:
+		return 0
+
+	var now_unix: int = int(Time.get_unix_time_from_system())
+	var online_count: int = 0
+
+	for doc_variant in json["documents"]:
+		if typeof(doc_variant) != TYPE_DICTIONARY:
+			continue
+		var doc: Dictionary = doc_variant
+		var parsed: Dictionary = Utilities.fields2dict(doc)
+		var last_seen_unix: int = int(parsed.get("last_seen_unix", 0))
+		if now_unix - last_seen_unix <= active_window_seconds:
+			online_count += 1
+
+	return online_count
+
+
+func _mark_chat_permission_error_once(context_message: String) -> void:
+	_chat_permission_blocked = true
+	if _chat_permission_logged_once:
+		return
+	_chat_permission_logged_once = true
+	print("%s: Missing or insufficient permissions." % context_message)
+	print(CHAT_FIRESTORE_RULES_HINT)
 
 
 func download_save() -> void:

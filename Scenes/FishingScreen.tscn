@@ -1,11 +1,13 @@
 [gd_scene format=3 uid="uid://c5gqu38tj857w"]
 
 [ext_resource type="Script" uid="uid://chjvfs2nwpobi" path="res://Scripts/FishingScreen.gd" id="1_h8x2p"]
-[ext_resource type="Script" path="res://Scripts/CooldownOrb.gd" id="6_cooldown_orb"]
 [ext_resource type="Texture2D" uid="uid://d0mbxxtc45a0" path="res://Assets/fish/Fresh Water/Catfish Outline.png" id="2_catfish_outline"]
 [ext_resource type="Texture2D" uid="uid://ycfln60tlh7n" path="res://Assets/fish/Fresh Water/Goldfish Outline.png" id="3_goldfish_outline"]
 [ext_resource type="Texture2D" uid="uid://dasgclcqa64s4" path="res://Assets/fish/Fresh Water/Rainbow Trout Outline.png" id="4_rainbow_trout_outline"]
 [ext_resource type="Texture2D" uid="uid://gyjcvlqiw3wc" path="res://Assets/fish/Fresh Water/Angelfish Outline.png" id="5_angelfish_outline"]
+[ext_resource type="Script" uid="uid://cpqwn62gnn633" path="res://Scripts/CooldownOrb.gd" id="6_cooldown_orb"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_inventory_panel"]
 
 [node name="FishingScreen" type="Control" unique_id=2137500724]
 layout_mode = 3
@@ -38,8 +40,9 @@ layout_mode = 2
 text = "Stamina: 0 / 0"
 horizontal_alignment = 1
 
-[node name="CooldownOrb" type="Control" parent="."]
+[node name="CooldownOrb" type="Control" parent="." unique_id=1002025334]
 visible = false
+custom_minimum_size = Vector2(28, 28)
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -49,7 +52,6 @@ offset_top = 22.0
 offset_right = -16.0
 offset_bottom = 50.0
 grow_horizontal = 0
-custom_minimum_size = Vector2(28, 28)
 script = ExtResource("6_cooldown_orb")
 
 [node name="CatchArea" type="Control" parent="." unique_id=1647801088]
@@ -88,7 +90,7 @@ grow_vertical = 2
 [node name="PopupMargin" type="MarginContainer" parent="MessagePopupLayer/PopupContainer" unique_id=814922147]
 layout_mode = 2
 theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 6
+theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 0
 
@@ -117,10 +119,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 24.0
+offset_left = 12.0
 offset_top = 84.0
-offset_right = -24.0
-offset_bottom = -64.0
+offset_right = -12.0
+offset_bottom = -48.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -131,9 +133,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 12
+theme_override_constants/margin_left = 0
 theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 12
+theme_override_constants/margin_right = 0
 theme_override_constants/margin_bottom = 12
 
 [node name="VBoxContainer" type="VBoxContainer" parent="InventoryDropdown/MarginContainer" unique_id=1530749132]
@@ -162,276 +164,390 @@ theme_override_constants/margin_bottom = 8
 layout_mode = 2
 text = "INVENTORY"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer" unique_id=1751674652]
+[node name="InventoryPanel" type="Panel" parent="InventoryDropdown/MarginContainer/VBoxContainer" unique_id=1751674652]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxEmpty_inventory_panel")
+
+[node name="InventoryMargin" type="MarginContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel" unique_id=1751674653]
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 4
+
+[node name="ScrollContainer" type="ScrollContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin" unique_id=1751674654]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 2
 
-[node name="GridContainer" type="GridContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer" unique_id=436231045]
+[node name="GridContainer" type="GridContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer" unique_id=436231045]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
 columns = 2
 
-[node name="FishCard1" type="PanelContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer" unique_id=1929026419]
-custom_minimum_size = Vector2(124, 176)
+[node name="FishCard1" type="PanelContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer" unique_id=1929026419]
+custom_minimum_size = Vector2(112, 154)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MarginContainer" type="MarginContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard1" unique_id=213564297]
+[node name="MarginContainer" type="MarginContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard1" unique_id=213564297]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
 
-[node name="VBoxContainer" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard1/MarginContainer" unique_id=561584911]
+[node name="VBoxContainer" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard1/MarginContainer" unique_id=561584911]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 4
+theme_override_constants/separation = 3
 
-[node name="TextureRect" type="TextureRect" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer" unique_id=1354176230]
+[node name="TextureRect" type="TextureRect" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer" unique_id=1354176230]
 texture_filter = 1
-custom_minimum_size = Vector2(0, 54)
+custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 texture = ExtResource("2_catfish_outline")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="FishName" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer" unique_id=1375043758]
+[node name="FishName" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer" unique_id=1375043758]
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 7
 text = "Catfish"
 horizontal_alignment = 1
 clip_text = true
 
-[node name="CountLabel" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer" unique_id=1380010501]
+[node name="CountLabel" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer" unique_id=1380010501]
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 7
 text = "x5"
 horizontal_alignment = 1
 
-[node name="ButtonRow" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer" unique_id=1560891733]
+[node name="ButtonRow" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer" unique_id=1560891733]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 3
 
-[node name="SellButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer/ButtonRow" unique_id=71501288]
+[node name="SellButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer/ButtonRow" unique_id=71501288]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "SELL"
 clip_text = true
 
-[node name="SellAllButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer/ButtonRow" unique_id=2030527344]
+[node name="SellAllButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer/ButtonRow" unique_id=2030527344]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "SELL ALL"
 clip_text = true
 
-[node name="EatButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer/ButtonRow" unique_id=790598220]
+[node name="EatButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer/ButtonRow" unique_id=790598220]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "EAT (+5 stamina)"
 clip_text = true
 
-[node name="FishCard2" type="PanelContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer" unique_id=165706433]
-custom_minimum_size = Vector2(124, 176)
+[node name="FishCard2" type="PanelContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer" unique_id=165706433]
+custom_minimum_size = Vector2(112, 154)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MarginContainer" type="MarginContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard2" unique_id=2008790641]
+[node name="MarginContainer" type="MarginContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard2" unique_id=2008790641]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
 
-[node name="VBoxContainer" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard2/MarginContainer" unique_id=1184439322]
+[node name="VBoxContainer" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard2/MarginContainer" unique_id=1184439322]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 4
+theme_override_constants/separation = 3
 
-[node name="TextureRect" type="TextureRect" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer" unique_id=1396944448]
+[node name="TextureRect" type="TextureRect" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer" unique_id=1396944448]
 texture_filter = 1
-custom_minimum_size = Vector2(0, 54)
+custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 texture = ExtResource("3_goldfish_outline")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="FishName" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer" unique_id=64833714]
+[node name="FishName" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer" unique_id=64833714]
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 7
 text = "Goldfish"
 horizontal_alignment = 1
 clip_text = true
 
-[node name="CountLabel" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer" unique_id=1115133880]
+[node name="CountLabel" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer" unique_id=1115133880]
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 7
 text = "x5"
 horizontal_alignment = 1
 
-[node name="ButtonRow" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer" unique_id=1173151817]
+[node name="ButtonRow" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer" unique_id=1173151817]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 3
 
-[node name="SellButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer/ButtonRow" unique_id=1123303419]
+[node name="SellButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer/ButtonRow" unique_id=1123303419]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "SELL"
 clip_text = true
 
-[node name="SellAllButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer/ButtonRow" unique_id=320204991]
+[node name="SellAllButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer/ButtonRow" unique_id=320204991]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "SELL ALL"
 clip_text = true
 
-[node name="EatButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer/ButtonRow" unique_id=1308198933]
+[node name="EatButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer/ButtonRow" unique_id=1308198933]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "EAT (+5 stamina)"
 clip_text = true
 
-[node name="FishCard3" type="PanelContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer" unique_id=112279762]
-custom_minimum_size = Vector2(124, 176)
+[node name="FishCard3" type="PanelContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer" unique_id=112279762]
+custom_minimum_size = Vector2(112, 154)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MarginContainer" type="MarginContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard3" unique_id=1779549203]
+[node name="MarginContainer" type="MarginContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard3" unique_id=1779549203]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
 
-[node name="VBoxContainer" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard3/MarginContainer" unique_id=1952385804]
+[node name="VBoxContainer" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard3/MarginContainer" unique_id=1952385804]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 4
+theme_override_constants/separation = 3
 
-[node name="TextureRect" type="TextureRect" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer" unique_id=717182370]
+[node name="TextureRect" type="TextureRect" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer" unique_id=717182370]
 texture_filter = 1
-custom_minimum_size = Vector2(0, 54)
+custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 texture = ExtResource("4_rainbow_trout_outline")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="FishName" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer" unique_id=1699795653]
+[node name="FishName" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer" unique_id=1699795653]
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 7
 text = "Rainbow Trout"
 horizontal_alignment = 1
 clip_text = true
 
-[node name="CountLabel" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer" unique_id=1730820852]
+[node name="CountLabel" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer" unique_id=1730820852]
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 7
 text = "x5"
 horizontal_alignment = 1
 
-[node name="ButtonRow" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer" unique_id=2026277434]
+[node name="ButtonRow" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer" unique_id=2026277434]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 3
 
-[node name="SellButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer/ButtonRow" unique_id=1795038894]
+[node name="SellButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer/ButtonRow" unique_id=1795038894]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "SELL"
 clip_text = true
 
-[node name="SellAllButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer/ButtonRow" unique_id=1257725118]
+[node name="SellAllButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer/ButtonRow" unique_id=1257725118]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "SELL ALL"
 clip_text = true
 
-[node name="EatButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer/ButtonRow" unique_id=1228861774]
+[node name="EatButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer/ButtonRow" unique_id=1228861774]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "EAT (+5 stamina)"
 clip_text = true
 
-[node name="FishCard4" type="PanelContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer" unique_id=1339982915]
-custom_minimum_size = Vector2(124, 176)
+[node name="FishCard4" type="PanelContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer" unique_id=1339982915]
+custom_minimum_size = Vector2(112, 154)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MarginContainer" type="MarginContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard4" unique_id=1477319746]
+[node name="MarginContainer" type="MarginContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard4" unique_id=1477319746]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
 
-[node name="VBoxContainer" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard4/MarginContainer" unique_id=545968906]
+[node name="VBoxContainer" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard4/MarginContainer" unique_id=545968906]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 4
+theme_override_constants/separation = 3
 
-[node name="TextureRect" type="TextureRect" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer" unique_id=2057162249]
+[node name="TextureRect" type="TextureRect" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer" unique_id=2057162249]
 texture_filter = 1
-custom_minimum_size = Vector2(0, 54)
+custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 texture = ExtResource("5_angelfish_outline")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="FishName" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer" unique_id=632649550]
+[node name="FishName" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer" unique_id=632649550]
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 7
 text = "Angelfish"
 horizontal_alignment = 1
 clip_text = true
 
-[node name="CountLabel" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer" unique_id=1992991679]
+[node name="CountLabel" type="Label" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer" unique_id=1992991679]
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 7
 text = "x5"
 horizontal_alignment = 1
 
-[node name="ButtonRow" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer" unique_id=607109460]
+[node name="ButtonRow" type="VBoxContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer" unique_id=607109460]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 3
 
-[node name="SellButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer/ButtonRow" unique_id=2070360175]
+[node name="SellButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer/ButtonRow" unique_id=2070360175]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "SELL"
 clip_text = true
 
-[node name="SellAllButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer/ButtonRow" unique_id=1369596420]
+[node name="SellAllButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer/ButtonRow" unique_id=1369596420]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "SELL ALL"
 clip_text = true
 
-[node name="EatButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer/ButtonRow" unique_id=1222864067]
+[node name="EatButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer/ButtonRow" unique_id=1222864067]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "EAT (+5 stamina)"
 clip_text = true
+
+[node name="SocialDropdown" type="Control" parent="." unique_id=213269845]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 84.0
+offset_right = -12.0
+offset_bottom = -48.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="SocialDropdown" unique_id=145179274]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 12
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SocialDropdown/MarginContainer" unique_id=617009822]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="HeaderPanel" type="Panel" parent="SocialDropdown/MarginContainer/VBoxContainer" unique_id=132566031]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+
+[node name="HeaderMargin" type="MarginContainer" parent="SocialDropdown/MarginContainer/VBoxContainer/HeaderPanel" unique_id=1065603408]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="HeaderRow" type="HBoxContainer" parent="SocialDropdown/MarginContainer/VBoxContainer/HeaderPanel/HeaderMargin" unique_id=1171721554]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="SocialDropdown/MarginContainer/VBoxContainer/HeaderPanel/HeaderMargin/HeaderRow" unique_id=2025070779]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "SOCIAL"
+
+[node name="OnlineLabel" type="Label" parent="SocialDropdown/MarginContainer/VBoxContainer/HeaderPanel/HeaderMargin/HeaderRow" unique_id=293167657]
+layout_mode = 2
+text = "Online now: 0"
+horizontal_alignment = 2
+
+[node name="ChatPanel" type="Panel" parent="SocialDropdown/MarginContainer/VBoxContainer" unique_id=2013224173]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ChatMargin" type="MarginContainer" parent="SocialDropdown/MarginContainer/VBoxContainer/ChatPanel" unique_id=1985021160]
+layout_mode = 0
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 4
+
+[node name="ChatLog" type="RichTextLabel" parent="SocialDropdown/MarginContainer/VBoxContainer/ChatPanel/ChatMargin" unique_id=1978703830]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+scroll_following = true
+
+[node name="InputRow" type="HBoxContainer" parent="SocialDropdown/MarginContainer/VBoxContainer" unique_id=1406222885]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="MessageInput" type="LineEdit" parent="SocialDropdown/MarginContainer/VBoxContainer/InputRow" unique_id=849694559]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "type here..."
+max_length = 180
+
+[node name="SendButton" type="Button" parent="SocialDropdown/MarginContainer/VBoxContainer/InputRow" unique_id=1986699381]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+text = "Send"
 
 [node name="BottomNavBar" type="Panel" parent="." unique_id=1269034571]
 layout_mode = 1
@@ -497,3 +613,4 @@ text = "Options"
 clip_text = true
 
 [connection signal="pressed" from="BottomNavBar/MarginContainer/HBoxContainer/InventoryButton" to="." method="_on_inventory_button_pressed"]
+[connection signal="pressed" from="BottomNavBar/MarginContainer/HBoxContainer/SocialButton" to="." method="_on_social_button_pressed"]
