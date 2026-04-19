@@ -43,13 +43,6 @@ func save_game() -> void:
 	access = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	access.store_string(JSON.stringify(Data.save_data, "\t"))
 	access.close()
-	_queue_remote_sync()
-
-
-func _queue_remote_sync() -> void:
-	if not FirebaseManager.is_authenticated():
-		return
-	FirebaseManager.queue_upload_save()
 
 func load_game() -> void:
 	if FileAccess.file_exists(SAVE_PATH):

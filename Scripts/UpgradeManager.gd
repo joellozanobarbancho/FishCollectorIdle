@@ -23,7 +23,6 @@ func buy_item(item_id: String) -> bool:
 	apply_items()
 
 	File.save_game()
-	FirebaseManager.upload_save()
 
 	return true
 

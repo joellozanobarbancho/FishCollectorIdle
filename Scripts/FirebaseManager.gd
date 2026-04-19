@@ -16,8 +16,6 @@ var local_id: String = ""
 var user_email: String = ""
 var last_auth_error: String = ""
 var _quitting: bool = false
-var _upload_sync_queued: bool = false
-var _upload_in_progress: bool = false
 
 
 func _ready() -> void:
@@ -193,12 +191,6 @@ func upload_save() -> void:
 		save_uploaded.emit(false)
 		return
 
-	if _upload_in_progress:
-		_upload_sync_queued = true
-		return
-
-	_upload_in_progress = true
-
 	if Data.save_data.is_empty():
 		File.new_game()
 
@@ -225,30 +217,6 @@ func upload_save() -> void:
 		if _is_permission_error(response):
 			print(FIRESTORE_RULES_HINT)
 		save_uploaded.emit(false)
-
-	_upload_in_progress = false
-	if _upload_sync_queued:
-		call_deferred("_flush_queued_upload_save")
-
-
-func queue_upload_save() -> void:
-	if not is_authenticated():
-		return
-	if _upload_sync_queued:
-		return
-	_upload_sync_queued = true
-	if not _upload_in_progress:
-		call_deferred("_flush_queued_upload_save")
-
-
-func _flush_queued_upload_save() -> void:
-	if _upload_in_progress:
-		return
-	if not is_authenticated():
-		_upload_sync_queued = false
-		return
-	_upload_sync_queued = false
-	await upload_save()
 
 
 func _is_permission_error(response: Dictionary) -> bool:
