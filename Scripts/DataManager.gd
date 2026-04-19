@@ -221,3 +221,24 @@ func get_random_fish_id_for_location(location_id: String) -> int:
 			return int(candidate["id"])
 
 	return int(candidates[candidates.size() - 1]["id"])
+
+
+func get_fish_data_by_id(fish_id: int) -> Dictionary:
+	if fish_db.has(fish_id):
+		var by_int: Variant = fish_db[fish_id]
+		if typeof(by_int) == TYPE_DICTIONARY:
+			return by_int
+
+	var fish_id_as_float: float = float(fish_id)
+	if fish_db.has(fish_id_as_float):
+		var by_float: Variant = fish_db[fish_id_as_float]
+		if typeof(by_float) == TYPE_DICTIONARY:
+			return by_float
+
+	var fish_id_as_string: String = str(fish_id)
+	if fish_db.has(fish_id_as_string):
+		var by_string: Variant = fish_db[fish_id_as_string]
+		if typeof(by_string) == TYPE_DICTIONARY:
+			return by_string
+
+	return {}

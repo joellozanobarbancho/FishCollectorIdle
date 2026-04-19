@@ -17,7 +17,7 @@ func add_fish(fish_id: int, size: int, value: int, location_id: String = "") -> 
 
 	Data.save_data["player"]["inventory"].append(entry)
 
-	var fish_data: Dictionary = DataManager.fish_db.get(fish_id, {})
+	var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
 	var xp_on_catch := 0
 	if typeof(fish_data) == TYPE_DICTIONARY and fish_data.has("xp_on_catch"):
 		xp_on_catch = int(fish_data["xp_on_catch"])
@@ -30,11 +30,12 @@ func add_fish(fish_id: int, size: int, value: int, location_id: String = "") -> 
 
 	File.save_game()
 
-func remove_fish(index: int) -> void:
+func remove_fish(index: int, should_save: bool = true) -> void:
 	var inv = Data.save_data["player"]["inventory"]
 	if index >= 0 and index < inv.size():
 		inv.remove_at(index)
-		File.save_game()
+		if should_save:
+			File.save_game()
 
 func clear_inventory() -> void:
 	Data.save_data["player"]["inventory"].clear()

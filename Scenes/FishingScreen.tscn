@@ -193,6 +193,13 @@ clip_text = true
 theme_override_font_sizes/font_size = 8
 text = "SELL ALL"
 
+[node name="EatButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard1/MarginContainer/VBoxContainer/ButtonRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
+theme_override_font_sizes/font_size = 8
+text = "EAT (+5 stamina)"
+
 [node name="FishCard2" type="PanelContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer" unique_id=165706433]
 layout_mode = 2
 custom_minimum_size = Vector2(124, 176)
@@ -254,6 +261,13 @@ size_flags_horizontal = 3
 clip_text = true
 theme_override_font_sizes/font_size = 8
 text = "SELL ALL"
+
+[node name="EatButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard2/MarginContainer/VBoxContainer/ButtonRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
+theme_override_font_sizes/font_size = 8
+text = "EAT (+5 stamina)"
 
 [node name="FishCard3" type="PanelContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer" unique_id=112279762]
 layout_mode = 2
@@ -317,6 +331,13 @@ clip_text = true
 theme_override_font_sizes/font_size = 8
 text = "SELL ALL"
 
+[node name="EatButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard3/MarginContainer/VBoxContainer/ButtonRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
+theme_override_font_sizes/font_size = 8
+text = "EAT (+5 stamina)"
+
 [node name="FishCard4" type="PanelContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer" unique_id=1339982915]
 layout_mode = 2
 custom_minimum_size = Vector2(124, 176)
@@ -378,6 +399,13 @@ size_flags_horizontal = 3
 clip_text = true
 theme_override_font_sizes/font_size = 8
 text = "SELL ALL"
+
+[node name="EatButton" type="Button" parent="InventoryDropdown/MarginContainer/VBoxContainer/ScrollContainer/GridContainer/FishCard4/MarginContainer/VBoxContainer/ButtonRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
+theme_override_font_sizes/font_size = 8
+text = "EAT (+5 stamina)"
 
 [node name="BottomNavBar" type="Panel" parent="." unique_id=1269034571]
 layout_mode = 1

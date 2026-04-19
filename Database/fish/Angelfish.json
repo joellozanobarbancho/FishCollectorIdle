@@ -7,6 +7,7 @@
 	"description": "",
 	"size": { "min": 10, "max": 25 },
 	"value": { "min": 5, "max": 10 },
+	"eat_stamina": 6,
 	"xp_on_catch": 5,
 	"trigger_minigame": false
 }
