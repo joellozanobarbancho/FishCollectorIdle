@@ -4,10 +4,14 @@ const BASE_CATCH_CHANCE: float = 0.85
 const BASE_STAMINA_COST: float = 15.0
 const BASE_REGEN_PER_SECOND: float = 0.1
 const REEL_COOLDOWN_SECONDS: float = 1.0
-const INVENTORY_CARD_FISH_NAMES: Array[String] = ["Catfish", "Goldfish", "Rainbow Trout", "Angelfish"]
 const CHAT_POLL_INTERVAL_SECONDS: float = 2.0
 const CHAT_MAX_MESSAGES_RENDERED: int = 30
 const CHAT_MAX_MESSAGE_LENGTH: int = 180
+const INVENTORY_CARD_SIZE := Vector2(112, 154)
+const INVENTORY_CARD_IMAGE_SIZE := Vector2(0, 46)
+const INVENTORY_CARD_PADDING := 4
+const INVENTORY_CARD_SEPARATION := 3
+const INVENTORY_GRID_SEPARATION := 6
 const POPUP_HALF_WIDTH: float = 200.0
 const POPUP_HALF_HEIGHT_TEXT_ONLY: float = 34.0
 const POPUP_HALF_HEIGHT_WITH_FISH: float = 82.0
@@ -43,13 +47,14 @@ const FISH_OUTLINE_TEXTURES := {
 var cast_cooldown_remaining: float = 0.0
 var stamina: float = 100.0
 var max_stamina: float = 100.0
-var card_fish_ids: Array[int] = [-1, -1, -1, -1]
+var card_fish_ids: Array[int] = []
 var _message_revision: int = 0
 var _cooldown_orb_activated: bool = false
 var _chat_poll_timer: float = CHAT_POLL_INTERVAL_SECONDS
 var _chat_request_in_flight: bool = false
 var _presence_request_in_flight: bool = false
 var _last_chat_render_signature: String = ""
+var _pending_local_chat_messages: Array = []
 
 
 func _ready() -> void:
@@ -64,8 +69,9 @@ func _ready() -> void:
 	popup_panel.visible = false
 	cooldown_orb.visible = false
 	cooldown_orb.call("set_progress", 1.0)
+	social_chat_log.add_theme_color_override("default_color", Color(1, 1, 1, 1))
 	_refresh_ui("Click to start fishing!")
-	_connect_sell_buttons()
+	_build_inventory_cards()
 	_connect_social_controls()
 
 
@@ -182,6 +188,115 @@ func _connect_social_controls() -> void:
 	if social_message_input and not social_message_input.text_submitted.is_connected(Callable(self, "_on_social_message_submitted")):
 		social_message_input.text_submitted.connect(Callable(self, "_on_social_message_submitted"))
 
+func _build_inventory_cards() -> void:
+	for child in grid_container.get_children():
+		child.free()
+
+	card_fish_ids.clear()
+	var inventory: Array = InventoryManager.get_inventory()
+	var fish_counts: Dictionary = {}
+	for item in inventory:
+		var fish_id: int = _normalized_fish_id(item.get("fish_id", -1))
+		if fish_id < 0:
+			continue
+		if not fish_counts.has(fish_id):
+			fish_counts[fish_id] = 0
+		fish_counts[fish_id] += 1
+
+	var fish_ids: Array[int] = _get_owned_fish_ids_from_counts(fish_counts)
+	for fish_id in fish_ids:
+		var count: int = int(fish_counts.get(fish_id, 0))
+		card_fish_ids.append(fish_id)
+		grid_container.add_child(_create_inventory_card(fish_id, card_fish_ids.size() - 1, count))
+
+
+func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelContainer:
+	var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
+	var fish_name: String = String(fish_data.get("name", "Fish #%d" % fish_id))
+	var eat_stamina: int = int(round(float(fish_data.get("eat_stamina", 5.0))))
+	var outline_texture: Texture2D = _get_outline_texture_for_fish(fish_id)
+
+	var card := PanelContainer.new()
+	card.custom_minimum_size = INVENTORY_CARD_SIZE
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var card_margin := MarginContainer.new()
+	card_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card_margin.add_theme_constant_override("margin_left", INVENTORY_CARD_PADDING)
+	card_margin.add_theme_constant_override("margin_top", INVENTORY_CARD_PADDING)
+	card_margin.add_theme_constant_override("margin_right", INVENTORY_CARD_PADDING)
+	card_margin.add_theme_constant_override("margin_bottom", INVENTORY_CARD_PADDING)
+	card.add_child(card_margin)
+
+	var card_column := VBoxContainer.new()
+	card_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card_column.add_theme_constant_override("separation", INVENTORY_CARD_SEPARATION)
+	card_margin.add_child(card_column)
+
+	var fish_sprite := TextureRect.new()
+	fish_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	fish_sprite.custom_minimum_size = INVENTORY_CARD_IMAGE_SIZE
+	fish_sprite.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if outline_texture:
+		fish_sprite.texture = outline_texture
+	fish_sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	fish_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	card_column.add_child(fish_sprite)
+
+	var name_label := Label.new()
+	name_label.name = "FishName"
+	name_label.text = fish_name
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.clip_text = true
+	name_label.add_theme_font_size_override("font_size", 7)
+	card_column.add_child(name_label)
+
+	var count_label := Label.new()
+	count_label.name = "CountLabel"
+	count_label.text = "x%d" % count
+	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	count_label.add_theme_font_size_override("font_size", 7)
+	card_column.add_child(count_label)
+
+	var button_row := VBoxContainer.new()
+	button_row.name = "ButtonRow"
+	button_row.add_theme_constant_override("separation", INVENTORY_CARD_SEPARATION)
+	card_column.add_child(button_row)
+
+	var sell_button := Button.new()
+	sell_button.name = "SellButton"
+	sell_button.text = "SELL"
+	sell_button.clip_text = true
+	sell_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sell_button.add_theme_font_size_override("font_size", 7)
+	sell_button.pressed.connect(Callable(self, "_on_sell_button_pressed").bind(card_index))
+	button_row.add_child(sell_button)
+
+	var sell_all_button := Button.new()
+	sell_all_button.name = "SellAllButton"
+	sell_all_button.text = "SELL ALL"
+	sell_all_button.clip_text = true
+	sell_all_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sell_all_button.add_theme_font_size_override("font_size", 7)
+	sell_all_button.pressed.connect(Callable(self, "_on_sell_all_button_pressed").bind(card_index))
+	button_row.add_child(sell_all_button)
+
+	var eat_button := Button.new()
+	eat_button.name = "EatButton"
+	eat_button.text = "EAT (+%d stamina)" % eat_stamina
+	eat_button.clip_text = true
+	eat_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	eat_button.add_theme_font_size_override("font_size", 7)
+	eat_button.pressed.connect(Callable(self, "_on_eat_button_pressed").bind(card_index))
+	button_row.add_child(eat_button)
+
+	var disable_actions: bool = count <= 0
+	sell_button.disabled = disable_actions
+	sell_all_button.disabled = disable_actions
+	eat_button.disabled = disable_actions
+
+	return card
+
 
 func _update_social_chat_polling(delta: float) -> void:
 	if not social_dropdown.visible:
@@ -237,9 +352,10 @@ func _refresh_chat_messages_async() -> void:
 func _render_social_messages(messages_desc: Array) -> void:
 	var chronological_messages: Array = messages_desc.duplicate()
 	chronological_messages.reverse()
+	var merged_messages: Array = _merge_pending_messages(chronological_messages)
 
 	var signature: String = ""
-	for entry_variant in chronological_messages:
+	for entry_variant in merged_messages:
 		if typeof(entry_variant) != TYPE_DICTIONARY:
 			continue
 		var entry: Dictionary = entry_variant
@@ -254,7 +370,7 @@ func _render_social_messages(messages_desc: Array) -> void:
 	_last_chat_render_signature = signature
 
 	social_chat_log.clear()
-	for entry_variant in chronological_messages:
+	for entry_variant in merged_messages:
 		if typeof(entry_variant) != TYPE_DICTIONARY:
 			continue
 		var entry: Dictionary = entry_variant
@@ -283,17 +399,17 @@ func _on_social_send_button_pressed() -> void:
 	if message_text.length() > CHAT_MAX_MESSAGE_LENGTH:
 		message_text = message_text.substr(0, CHAT_MAX_MESSAGE_LENGTH)
 
+	_append_local_chat_message(_current_player_name(), message_text)
+	social_message_input.text = ""
+	_chat_poll_timer = 0.2
+
 	social_send_button.disabled = true
 	var sent_ok: bool = await FirebaseManager.send_global_chat_message(message_text, _current_player_name())
 	social_send_button.disabled = false
 
 	if not sent_ok:
-		social_online_label.text = "Message failed"
+		social_online_label.text = "Message failed (local only)"
 		return
-
-	social_message_input.text = ""
-	_chat_poll_timer = CHAT_POLL_INTERVAL_SECONDS
-	_refresh_social_panel(true)
 
 
 func _on_social_message_submitted(_new_text: String) -> void:
@@ -320,6 +436,72 @@ func _show_chat_permission_needed_message() -> void:
 	if social_chat_log.get_parsed_text().is_empty():
 		social_chat_log.clear()
 		social_chat_log.add_text("Configure Firestore rules for global_chat_messages and online_presence.\n")
+
+
+func _append_local_chat_message(player_name: String, message: String) -> void:
+	var now_unix: int = int(Time.get_unix_time_from_system())
+	_pending_local_chat_messages.append({
+		"player_name": player_name,
+		"message": message,
+		"created_at_unix": now_unix,
+		"_local_pending": true
+	})
+	var timestamp_text: String = _format_unix_time(now_unix)
+	if social_chat_log.get_parsed_text().is_empty():
+		social_chat_log.clear()
+		social_chat_log.add_text("[%s] %s: %s\n" % [timestamp_text, player_name, message])
+	else:
+		social_chat_log.add_text("[%s] %s: %s\n" % [timestamp_text, player_name, message])
+	if social_chat_log.get_line_count() > 0:
+		social_chat_log.scroll_to_line(social_chat_log.get_line_count() - 1)
+
+
+func _merge_pending_messages(remote_chronological: Array) -> Array:
+	var now_unix: int = int(Time.get_unix_time_from_system())
+	var remaining_pending: Array = []
+
+	for pending_variant in _pending_local_chat_messages:
+		if typeof(pending_variant) != TYPE_DICTIONARY:
+			continue
+		var pending: Dictionary = pending_variant
+		var pending_time: int = int(pending.get("created_at_unix", 0))
+		if pending_time <= 0:
+			continue
+
+		# Drop very old pending items to avoid stale duplicates forever.
+		if now_unix - pending_time > 30:
+			continue
+
+		var matched_remote: bool = false
+		for remote_variant in remote_chronological:
+			if typeof(remote_variant) != TYPE_DICTIONARY:
+				continue
+			var remote_entry: Dictionary = remote_variant
+			if str(remote_entry.get("player_name", "")) != str(pending.get("player_name", "")):
+				continue
+			if str(remote_entry.get("message", "")) != str(pending.get("message", "")):
+				continue
+			var remote_time: int = int(remote_entry.get("created_at_unix", 0))
+			if abs(remote_time - pending_time) <= 20:
+				matched_remote = true
+				break
+
+		if not matched_remote:
+			remaining_pending.append(pending)
+
+	_pending_local_chat_messages = remaining_pending
+
+	var merged: Array = remote_chronological.duplicate()
+	for pending in _pending_local_chat_messages:
+		merged.append(pending)
+
+	merged.sort_custom(func(a, b):
+		var ta: int = int(a.get("created_at_unix", 0))
+		var tb: int = int(b.get("created_at_unix", 0))
+		return ta < tb
+	)
+
+	return merged
 
 
 func _roll_from_range(range_data: Dictionary, fallback_min: int, fallback_max: int) -> int:
@@ -573,56 +755,15 @@ func _on_eat_button_pressed(card_index: int) -> void:
 	_update_inventory_display()
 
 func _update_inventory_display() -> void:
-	var inventory: Array = InventoryManager.get_inventory()
-	var fish_counts: Dictionary = {}
-	
-	for item in inventory:
-		var fish_id: int = _normalized_fish_id(item.get("fish_id", -1))
-		if not fish_counts.has(fish_id):
-			fish_counts[fish_id] = 0
-		fish_counts[fish_id] += 1
-	
-	for i in range(1, 5):
-		var fish_card: Control = grid_container.get_child(i - 1)
-		if fish_card:
-			var fish_name_label: Label = fish_card.find_child("FishName")
-			var count_label: Label = fish_card.find_child("CountLabel")
-			var sell_button: Button = fish_card.find_child("SellButton")
-			var sell_all_button: Button = fish_card.find_child("SellAllButton")
-			var eat_button: Button = fish_card.find_child("EatButton")
-
-			var target_fish_name: String = INVENTORY_CARD_FISH_NAMES[i - 1]
-			var target_fish_id: int = _get_fish_id_by_name(target_fish_name)
-			var count: int = int(fish_counts.get(target_fish_id, 0))
-			card_fish_ids[i - 1] = target_fish_id
-
-			var fish_data: Dictionary = DataManager.get_fish_data_by_id(target_fish_id)
-			var eat_stamina: int = int(round(float(fish_data.get("eat_stamina", 5.0))))
-
-			if fish_name_label:
-				fish_name_label.text = target_fish_name
-			if count_label:
-				count_label.text = "x%d" % count
-
-			var disable_actions: bool = target_fish_id < 0 or count <= 0
-			if sell_button:
-				sell_button.disabled = disable_actions
-			if sell_all_button:
-				sell_all_button.disabled = disable_actions
-			if eat_button:
-				eat_button.disabled = disable_actions
-				eat_button.text = "EAT (+%d stamina)" % eat_stamina
+	_build_inventory_cards()
 
 
-func _get_fish_id_by_name(fish_name: String) -> int:
-	for fish_id_key in DataManager.fish_db.keys():
-		var fish_id: int = _normalized_fish_id(fish_id_key)
-		if fish_id < 0:
-			continue
-		var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
-		if String(fish_data.get("name", "")) == fish_name:
-			return fish_id
-	return -1
+func _get_owned_fish_ids_from_counts(fish_counts: Dictionary) -> Array[int]:
+	var fish_ids: Array[int] = []
+	for fish_id_variant in fish_counts.keys():
+		fish_ids.append(int(fish_id_variant))
+	fish_ids.sort()
+	return fish_ids
 
 
 func _normalized_fish_id(raw_fish_id: Variant) -> int:
