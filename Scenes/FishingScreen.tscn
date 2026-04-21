@@ -1,13 +1,7 @@
 [gd_scene format=3 uid="uid://c5gqu38tj857w"]
 
 [ext_resource type="Script" uid="uid://chjvfs2nwpobi" path="res://Scripts/FishingScreen.gd" id="1_h8x2p"]
-[ext_resource type="Texture2D" uid="uid://d0mbxxtc45a0" path="res://Assets/fish/Fresh Water/Catfish Outline.png" id="2_catfish_outline"]
-[ext_resource type="Texture2D" uid="uid://ycfln60tlh7n" path="res://Assets/fish/Fresh Water/Goldfish Outline.png" id="3_goldfish_outline"]
-[ext_resource type="Texture2D" uid="uid://dasgclcqa64s4" path="res://Assets/fish/Fresh Water/Rainbow Trout Outline.png" id="4_rainbow_trout_outline"]
-[ext_resource type="Texture2D" uid="uid://gyjcvlqiw3wc" path="res://Assets/fish/Fresh Water/Angelfish Outline.png" id="5_angelfish_outline"]
 [ext_resource type="Script" uid="uid://cpqwn62gnn633" path="res://Scripts/CooldownOrb.gd" id="6_cooldown_orb"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_inventory_panel"]
 
 [node name="FishingScreen" type="Control" unique_id=2137500724]
 layout_mode = 3
@@ -114,7 +108,89 @@ layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
 
+[node name="StoreDropdown" type="Control" parent="." unique_id=623455771]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 84.0
+offset_right = -12.0
+offset_bottom = -48.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="StoreDropdown" unique_id=173112004]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 12
+
+[node name="VBoxContainer" type="VBoxContainer" parent="StoreDropdown/MarginContainer" unique_id=2064438840]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="HeaderPanel" type="Panel" parent="StoreDropdown/MarginContainer/VBoxContainer" unique_id=1699120094]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+
+[node name="HeaderMargin" type="MarginContainer" parent="StoreDropdown/MarginContainer/VBoxContainer/HeaderPanel" unique_id=1748248010]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="HeaderLabel" type="Label" parent="StoreDropdown/MarginContainer/VBoxContainer/HeaderPanel/HeaderMargin" unique_id=1999911573]
+layout_mode = 2
+text = "STORE"
+
+[node name="StorePanel" type="Panel" parent="StoreDropdown/MarginContainer/VBoxContainer" unique_id=1459090229]
+clip_contents = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="StoreMargin" type="MarginContainer" parent="StoreDropdown/MarginContainer/VBoxContainer/StorePanel" unique_id=1581744041]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ScrollContainer" type="ScrollContainer" parent="StoreDropdown/MarginContainer/VBoxContainer/StorePanel/StoreMargin" unique_id=985000212]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 2
+
+[node name="ItemList" type="VBoxContainer" parent="StoreDropdown/MarginContainer/VBoxContainer/StorePanel/StoreMargin/ScrollContainer" unique_id=660019956]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
 [node name="InventoryDropdown" type="Control" parent="." unique_id=1812458890]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -168,10 +244,8 @@ text = "INVENTORY"
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_styles/panel = SubResource("StyleBoxEmpty_inventory_panel")
 
 [node name="InventoryMargin" type="MarginContainer" parent="InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel" unique_id=1751674653]
-self_modulate = Color(1, 1, 1, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -179,7 +253,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 0
+theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 0
 theme_override_constants/margin_bottom = 4
 
@@ -329,37 +403,38 @@ theme_override_constants/separation = 2
 [node name="StoreButton" type="Button" parent="BottomNavBar/MarginContainer/HBoxContainer" unique_id=1762002455]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 11
 text = "Store"
 clip_text = true
 
 [node name="InventoryButton" type="Button" parent="BottomNavBar/MarginContainer/HBoxContainer" unique_id=1708990511]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 11
 text = "Inventory"
 clip_text = true
 
 [node name="GoalsButton" type="Button" parent="BottomNavBar/MarginContainer/HBoxContainer" unique_id=92606240]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 11
 text = "Goals"
 clip_text = true
 
 [node name="SocialButton" type="Button" parent="BottomNavBar/MarginContainer/HBoxContainer" unique_id=2073268878]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 11
 text = "Social"
 clip_text = true
 
 [node name="OptionsButton" type="Button" parent="BottomNavBar/MarginContainer/HBoxContainer" unique_id=1682550832]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 11
 text = "Options"
 clip_text = true
 
+[connection signal="pressed" from="BottomNavBar/MarginContainer/HBoxContainer/StoreButton" to="." method="_on_store_button_pressed"]
 [connection signal="pressed" from="BottomNavBar/MarginContainer/HBoxContainer/InventoryButton" to="." method="_on_inventory_button_pressed"]
 [connection signal="pressed" from="BottomNavBar/MarginContainer/HBoxContainer/SocialButton" to="." method="_on_social_button_pressed"]

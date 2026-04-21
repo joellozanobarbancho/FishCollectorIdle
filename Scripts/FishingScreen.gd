@@ -8,10 +8,13 @@ const CHAT_POLL_INTERVAL_SECONDS: float = 2.0
 const CHAT_MAX_MESSAGES_RENDERED: int = 30
 const CHAT_MAX_MESSAGE_LENGTH: int = 180
 const INVENTORY_CARD_SIZE := Vector2(112, 154)
-const INVENTORY_CARD_IMAGE_SIZE := Vector2(0, 46)
-const INVENTORY_CARD_PADDING := 4
-const INVENTORY_CARD_SEPARATION := 3
+const INVENTORY_CARD_IMAGE_SIZE := Vector2(0, 42)
+const INVENTORY_CARD_PADDING := 3
+const INVENTORY_CARD_SEPARATION := 2
+const INVENTORY_CARD_FONT_SIZE := 8
 const INVENTORY_GRID_SEPARATION := 6
+const STORE_ITEM_PADDING := 8
+const STORE_ITEM_SEPARATION := 4
 const POPUP_HALF_WIDTH: float = 200.0
 const POPUP_HALF_HEIGHT_TEXT_ONLY: float = 34.0
 const POPUP_HALF_HEIGHT_WITH_FISH: float = 82.0
@@ -36,6 +39,8 @@ const FISH_OUTLINE_TEXTURES := {
 @onready var popup_panel: PanelContainer = $MessagePopupLayer/PopupContainer
 @onready var popup_label: Label = $MessagePopupLayer/PopupContainer/PopupMargin/PopupContent/PopupLabel
 @onready var popup_fish_sprite: TextureRect = $MessagePopupLayer/PopupContainer/PopupMargin/PopupContent/PopupFishSprite
+@onready var store_dropdown: Control = $StoreDropdown
+@onready var store_item_list: VBoxContainer = $StoreDropdown/MarginContainer/VBoxContainer/StorePanel/StoreMargin/ScrollContainer/ItemList
 @onready var inventory_dropdown: Control = $InventoryDropdown
 @onready var grid_container: GridContainer = $InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer
 @onready var social_dropdown: Control = $SocialDropdown
@@ -63,6 +68,7 @@ func _ready() -> void:
 		File.load_game()
 	_ensure_player_defaults()
 	_pull_stamina_from_stats()
+	store_dropdown.visible = false
 	inventory_dropdown.visible = false
 	social_dropdown.visible = false
 	popup_layer.visible = false
@@ -71,6 +77,7 @@ func _ready() -> void:
 	cooldown_orb.call("set_progress", 1.0)
 	social_chat_log.add_theme_color_override("default_color", Color(1, 1, 1, 1))
 	_refresh_ui("Click to start fishing!")
+	_build_store_items()
 	_build_inventory_cards()
 	_connect_social_controls()
 
@@ -94,7 +101,7 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if inventory_dropdown.visible or social_dropdown.visible:
+	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible:
 		return
 	if not (event is InputEventMouseButton):
 		return
@@ -165,9 +172,19 @@ func _on_fish_button_pressed() -> void:
 	_update_inventory_display()
 
 
+
+func _on_store_button_pressed() -> void:
+	store_dropdown.visible = not store_dropdown.visible
+	if store_dropdown.visible:
+		inventory_dropdown.visible = false
+		social_dropdown.visible = false
+		_build_store_items()
+
+
 func _on_inventory_button_pressed() -> void:
 	inventory_dropdown.visible = not inventory_dropdown.visible
 	if inventory_dropdown.visible:
+		store_dropdown.visible = false
 		social_dropdown.visible = false
 	if inventory_dropdown.visible:
 		_update_inventory_display()
@@ -176,10 +193,128 @@ func _on_inventory_button_pressed() -> void:
 func _on_social_button_pressed() -> void:
 	social_dropdown.visible = not social_dropdown.visible
 	if social_dropdown.visible:
+		store_dropdown.visible = false
 		inventory_dropdown.visible = false
 		_refresh_social_panel(true)
 	else:
 		_chat_poll_timer = CHAT_POLL_INTERVAL_SECONDS
+
+
+func _build_store_items() -> void:
+	for child in store_item_list.get_children():
+		child.queue_free()
+
+	for item_id_variant in DataManager.items_db.keys():
+		var item_id: String = String(item_id_variant)
+		var item_variant: Variant = DataManager.items_db[item_id_variant]
+		if typeof(item_variant) != TYPE_DICTIONARY:
+			continue
+		var item_data: Dictionary = item_variant
+		store_item_list.add_child(_create_store_item_row(item_id, item_data))
+
+
+func _create_store_item_row(item_id: String, item_data: Dictionary) -> PanelContainer:
+	var owned_level: int = UpgradeManager.get_item_level(item_id)
+	var max_level: int = int(item_data.get("max_level", 0))
+	var is_maxed: bool = owned_level >= max_level
+
+	var title_text: String = String(item_data.get("name", item_id))
+	var level_text: String = "Lvl %d/%d" % [owned_level, max_level]
+	var item_description: String = String(item_data.get("description", ""))
+	var next_level_cost: int = -1
+
+	if not is_maxed:
+		var levels_variant: Variant = item_data.get("levels", [])
+		if typeof(levels_variant) == TYPE_ARRAY:
+			var levels: Array = levels_variant
+			if owned_level >= 0 and owned_level < levels.size():
+				var next_level_data_variant: Variant = levels[owned_level]
+				if typeof(next_level_data_variant) == TYPE_DICTIONARY:
+					var next_level_data: Dictionary = next_level_data_variant
+					next_level_cost = int(next_level_data.get("cost", -1))
+
+	var row := PanelContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.custom_minimum_size = Vector2(0, 86)
+
+	var margin := MarginContainer.new()
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.add_theme_constant_override("margin_left", STORE_ITEM_PADDING)
+	margin.add_theme_constant_override("margin_top", STORE_ITEM_PADDING)
+	margin.add_theme_constant_override("margin_right", STORE_ITEM_PADDING)
+	margin.add_theme_constant_override("margin_bottom", STORE_ITEM_PADDING)
+	row.add_child(margin)
+
+	var content := VBoxContainer.new()
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", STORE_ITEM_SEPARATION)
+	margin.add_child(content)
+
+	var top_row := HBoxContainer.new()
+	top_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_row.add_theme_constant_override("separation", 8)
+	content.add_child(top_row)
+
+	var title_label := Label.new()
+	title_label.text = "%s (%s)" % [title_text, level_text]
+	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_label.clip_text = true
+	title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	top_row.add_child(title_label)
+
+	var buy_button := Button.new()
+	buy_button.custom_minimum_size = Vector2(72, 0)
+	buy_button.size_flags_horizontal = Control.SIZE_SHRINK_END
+	buy_button.text = "MAX"
+	buy_button.disabled = true
+	if not is_maxed:
+		buy_button.text = "Buy"
+		buy_button.disabled = false
+		buy_button.pressed.connect(Callable(self, "_on_buy_store_item_pressed").bind(item_id))
+	top_row.add_child(buy_button)
+
+	var cost_label := Label.new()
+	if is_maxed:
+		cost_label.text = "Max level reached"
+	else:
+		cost_label.text = "Cost: %d" % max(next_level_cost, 0)
+	content.add_child(cost_label)
+
+	var description_label := Label.new()
+	description_label.text = item_description
+	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(description_label)
+
+	return row
+
+
+func _on_buy_store_item_pressed(item_id: String) -> void:
+	var item_variant: Variant = DataManager.items_db.get(item_id, null)
+	if typeof(item_variant) != TYPE_DICTIONARY:
+		return
+
+	var item_data: Dictionary = item_variant
+	var owned_level: int = UpgradeManager.get_item_level(item_id)
+	var max_level: int = int(item_data.get("max_level", 0))
+	if owned_level >= max_level:
+		_build_store_items()
+		return
+
+	var next_cost: int = UpgradeManager.get_next_level_cost(item_id)
+	var player_coins: int = int(Data.save_data["player"].get("coins", 0))
+	if next_cost < 0:
+		return
+	if player_coins < next_cost:
+		_refresh_ui("Not enough coins.")
+		return
+
+	var purchase_ok: bool = UpgradeManager.buy_item(item_id)
+	if not purchase_ok:
+		return
+
+	_pull_stamina_from_stats()
+	_refresh_hud_only()
+	_build_store_items()
 
 
 func _connect_social_controls() -> void:
@@ -248,14 +383,15 @@ func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelC
 	name_label.text = fish_name
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.clip_text = true
-	name_label.add_theme_font_size_override("font_size", 7)
+	name_label.add_theme_font_size_override("font_size", INVENTORY_CARD_FONT_SIZE)
 	card_column.add_child(name_label)
 
 	var count_label := Label.new()
 	count_label.name = "CountLabel"
 	count_label.text = "x%d" % count
 	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	count_label.add_theme_font_size_override("font_size", 7)
+	count_label.clip_text = true
+	count_label.add_theme_font_size_override("font_size", INVENTORY_CARD_FONT_SIZE)
 	card_column.add_child(count_label)
 
 	var button_row := VBoxContainer.new()
@@ -268,7 +404,7 @@ func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelC
 	sell_button.text = "SELL"
 	sell_button.clip_text = true
 	sell_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	sell_button.add_theme_font_size_override("font_size", 7)
+	sell_button.add_theme_font_size_override("font_size", INVENTORY_CARD_FONT_SIZE)
 	sell_button.pressed.connect(Callable(self, "_on_sell_button_pressed").bind(card_index))
 	button_row.add_child(sell_button)
 
@@ -277,7 +413,7 @@ func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelC
 	sell_all_button.text = "SELL ALL"
 	sell_all_button.clip_text = true
 	sell_all_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	sell_all_button.add_theme_font_size_override("font_size", 7)
+	sell_all_button.add_theme_font_size_override("font_size", INVENTORY_CARD_FONT_SIZE)
 	sell_all_button.pressed.connect(Callable(self, "_on_sell_all_button_pressed").bind(card_index))
 	button_row.add_child(sell_all_button)
 
@@ -286,7 +422,7 @@ func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelC
 	eat_button.text = "EAT (+%d stamina)" % eat_stamina
 	eat_button.clip_text = true
 	eat_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	eat_button.add_theme_font_size_override("font_size", 7)
+	eat_button.add_theme_font_size_override("font_size", INVENTORY_CARD_FONT_SIZE)
 	eat_button.pressed.connect(Callable(self, "_on_eat_button_pressed").bind(card_index))
 	button_row.add_child(eat_button)
 
@@ -521,7 +657,9 @@ func _dict_from_variant(value: Variant) -> Dictionary:
 
 
 func _get_cast_cooldown() -> float:
-	return REEL_COOLDOWN_SECONDS
+	var speed_stat: float = max(_get_stat_float("fishing_speed", BASE_STAMINA_COST), 1.0)
+	var speed_ratio: float = clamp(speed_stat / BASE_STAMINA_COST, 0.2, 3.0)
+	return REEL_COOLDOWN_SECONDS * speed_ratio
 
 
 func _get_stamina_cost() -> float:
@@ -548,6 +686,18 @@ func _ensure_player_defaults() -> void:
 		player["inventory"] = []
 	if not player.has("current_location"):
 		player["current_location"] = "river"
+	if not player.has("base_stats"):
+		player["base_stats"] = {
+			"fishing_stamina": 100.0,
+			"fishing_stamina_regen": 0.1,
+			"fishing_speed": 15.0,
+			"chest_chance": 1.0,
+			"fish_chance": 1.0,
+			"rare_fish_chance": 1.0,
+			"xp_multiplier": 1.0,
+		}
+	if not player.has("items_owned"):
+		player["items_owned"] = {}
 	if not player.has("current_stats"):
 		player["current_stats"] = {}
 
@@ -567,6 +717,11 @@ func _refresh_ui(message: String, caught_fish_id: int = -1) -> void:
 	_update_coins_label()
 	_update_stamina_label()
 	_show_popup_message(message, caught_fish_id)
+
+
+func _refresh_hud_only() -> void:
+	_update_coins_label()
+	_update_stamina_label()
 
 
 func _show_popup_message(message: String, caught_fish_id: int = -1) -> void:
@@ -649,14 +804,12 @@ func _on_sell_button_pressed(card_index: int) -> void:
 
 	var fish_id: int = card_fish_ids[card_index]
 	if fish_id < 0:
-		_refresh_ui("No fish to sell.")
 		return
 
 	var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
 	var fish_name: String = String(fish_data.get("name", "Fish #%d" % fish_id))
 	
 	if fish_id < 0:
-		_refresh_ui("Error: Fish not found.")
 		return
 	
 	var inventory: Array = InventoryManager.get_inventory()
@@ -667,7 +820,6 @@ func _on_sell_button_pressed(card_index: int) -> void:
 			break
 	
 	if found_index < 0:
-		_refresh_ui("No %s to sell." % fish_name)
 		return
 	
 	var fish_value: int = inventory[found_index].get("value", 0)
@@ -676,7 +828,7 @@ func _on_sell_button_pressed(card_index: int) -> void:
 	
 	InventoryManager.remove_fish(found_index)
 	
-	_refresh_ui("Sold %s for %d coins." % [fish_name, fish_value])
+	_refresh_hud_only()
 	_update_inventory_display()
 
 
@@ -686,14 +838,12 @@ func _on_sell_all_button_pressed(card_index: int) -> void:
 
 	var fish_id: int = card_fish_ids[card_index]
 	if fish_id < 0:
-		_refresh_ui("No fish to sell.")
 		return
 
 	var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
 	var fish_name: String = String(fish_data.get("name", "Fish #%d" % fish_id))
 	
 	if fish_id < 0:
-		_refresh_ui("Error: Fish not found.")
 		return
 	
 	var inventory: Array = InventoryManager.get_inventory()
@@ -708,7 +858,6 @@ func _on_sell_all_button_pressed(card_index: int) -> void:
 			indices_to_remove.append(i)
 	
 	if fish_count == 0:
-		_refresh_ui("No %s to sell." % fish_name)
 		return
 	
 	var current_coins: int = int(Data.save_data["player"].get("coins", 0))
@@ -721,17 +870,19 @@ func _on_sell_all_button_pressed(card_index: int) -> void:
 
 	File.save_game()
 	
-	_refresh_ui("Sold %d %s(s) for %d coins." % [fish_count, fish_name, total_value])
+	_refresh_hud_only()
 	_update_inventory_display()
 
 
 func _on_eat_button_pressed(card_index: int) -> void:
 	if card_index < 0 or card_index >= card_fish_ids.size():
 		return
+	if stamina >= max_stamina:
+		_refresh_ui("Stamina is already full.")
+		return
 
 	var fish_id: int = card_fish_ids[card_index]
 	if fish_id < 0:
-		_refresh_ui("No fish to eat.")
 		return
 
 	var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
@@ -746,12 +897,11 @@ func _on_eat_button_pressed(card_index: int) -> void:
 			break
 
 	if found_index < 0:
-		_refresh_ui("No %s to eat." % fish_name)
 		return
 
 	InventoryManager.remove_fish(found_index)
 	stamina = min(stamina + stamina_gain, max_stamina)
-	_refresh_ui("You ate a %s! +%d stamina" % [fish_name, int(round(stamina_gain))])
+	_refresh_hud_only()
 	_update_inventory_display()
 
 func _update_inventory_display() -> void:

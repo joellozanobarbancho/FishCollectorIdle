@@ -54,7 +54,7 @@ grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("1_main_title")
 expand_mode = 1
-stretch_mode = 6
+stretch_mode = 5
 
 [node name="ButtonsLayer" type="Control" parent="." unique_id=1327896582]
 layout_mode = 1
@@ -82,7 +82,7 @@ theme_override_constants/separation = 10
 [node name="LoginButton" type="Button" parent="ButtonsLayer/ButtonColumn" unique_id=613762782]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 15
 theme_override_styles/normal = SubResource("StyleBoxFlat_menu_button")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_menu_button_hover")
 theme_override_styles/hover = SubResource("StyleBoxFlat_menu_button_hover")
@@ -91,7 +91,7 @@ text = "Login"
 [node name="RegisterButton" type="Button" parent="ButtonsLayer/ButtonColumn" unique_id=611270489]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 15
 theme_override_styles/normal = SubResource("StyleBoxFlat_menu_button")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_menu_button_hover")
 theme_override_styles/hover = SubResource("StyleBoxFlat_menu_button_hover")

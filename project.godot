@@ -28,14 +28,18 @@ LevelManager="*uid://biule74gcsyd2"
 
 [display]
 
-window/size/viewport_width=256
-window/size/viewport_height=512
+window/size/viewport_width=360
+window/size/viewport_height=640
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/godot-firebase/plugin.cfg")
+
+[gui]
+
+theme/custom="res://Themes/GameTheme.tres"
 
 [physics]
 

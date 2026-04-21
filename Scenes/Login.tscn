@@ -66,17 +66,17 @@ grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("1_g6fiq")
 expand_mode = 1
-stretch_mode = 6
+stretch_mode = 5
 
 [node name="BackToHomeButton" type="Button" parent="." unique_id=400077034]
+visible = false
 layout_mode = 1
 offset_left = 10.0
 offset_top = 10.0
-offset_right = 46.0
-offset_bottom = 46.0
-theme_override_font_sizes/font_size = 22
-text = "←"
-flat = true
+offset_right = 96.0
+offset_bottom = 44.0
+z_index = 10
+text = "Back"
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=709278563]
 layout_mode = 1
@@ -85,6 +85,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
 [node name="AuthCard" type="PanelContainer" parent="CenterContainer" unique_id=759855269]
 layout_mode = 2
@@ -92,10 +93,10 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_auth_card")
 
 [node name="MarginContainer" type="MarginContainer" parent="CenterContainer/AuthCard" unique_id=866735402]
 layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 16
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/AuthCard/MarginContainer" unique_id=730198366]
 layout_mode = 2
@@ -125,6 +126,11 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "Login"
 
+[node name="BackButton" type="Button" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=2099431774]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Back"
+
 [node name="StatusLabel" type="Label" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer"]
 layout_mode = 2
 autowrap_mode = 3
@@ -134,7 +140,7 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_color = Color(0.42, 0.7, 1, 1)
 theme_override_colors/font_hover_color = Color(0.6, 0.8, 1, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 12
 theme_override_styles/normal = SubResource("StyleBoxFlat_link_button")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_link_button_hover")
 theme_override_styles/hover = SubResource("StyleBoxFlat_link_button_hover")
@@ -142,5 +148,6 @@ text = "Forgot your password?"
 flat = true
 
 [connection signal="pressed" from="BackToHomeButton" to="." method="_on_back_to_home_button_pressed"]
+[connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/BackButton" to="." method="_on_back_to_home_button_pressed"]
 [connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/LoginButton" to="." method="_on_login_button_pressed"]
 [connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/ForgotPasswordButton" to="." method="_on_forgot_password_button_pressed"]

@@ -68,7 +68,4 @@ func _on_forgot_password_button_pressed() -> void:
 
 
 func _on_back_to_home_button_pressed() -> void:
-	if ResourceLoader.exists(HOME_SCENE_PATH):
-		get_tree().change_scene_to_file(HOME_SCENE_PATH)
-		return
-	status_label.text = "Home screen not created yet"
+	get_tree().change_scene_to_file(HOME_SCENE_PATH)

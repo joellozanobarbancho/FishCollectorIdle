@@ -34,7 +34,7 @@ grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("1_g6fiq")
 expand_mode = 1
-stretch_mode = 6
+stretch_mode = 5
 
 [node name="PopupOverlay" type="ColorRect" parent="." unique_id=1402998700]
 visible = false
@@ -76,16 +76,6 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="BackToHomeButton" type="Button" parent="." unique_id=930678176]
-layout_mode = 1
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 46.0
-offset_bottom = 46.0
-theme_override_font_sizes/font_size = 22
-text = "←"
-flat = true
-
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=1971837766]
 layout_mode = 1
 anchors_preset = 15
@@ -101,10 +91,10 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_auth_card")
 
 [node name="MarginContainer" type="MarginContainer" parent="CenterContainer/AuthCard" unique_id=1476766498]
 layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 16
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/AuthCard/MarginContainer" unique_id=1866572354]
 layout_mode = 2
@@ -153,5 +143,14 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "Create Account"
 
-[connection signal="pressed" from="BackToHomeButton" to="." method="_on_back_to_home_button_pressed"]
+[node name="BackButton" type="Button" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=197021751]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Back"
+
+[node name="StatusLabel" type="Label" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer"]
+layout_mode = 2
+autowrap_mode = 3
+
+[connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/BackButton" to="." method="_on_back_to_home_button_pressed"]
 [connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/RegisterButton" to="." method="_on_register_button_pressed"]

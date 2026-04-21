@@ -6,9 +6,9 @@
 			"description": "A trusty fishing rod that increases your fishing speed",
 			"max_level": 3,
 			"levels": [
-				{ "level": 1, "cost": 20, "effect": { "fishing_speed": -5 }, "description": "A basic wooden fishing rod" },
-				{ "level": 2, "cost": 50, "effect": { "fishing_speed": -5 }, "description": "A lightweight composite rod" },
-				{ "level": 3, "cost": 100, "effect": { "fishing_speed": -5 }, "description": "Professional carbon-fiber rod" }
+				{ "level": 1, "cost": 20, "effect": { "fishing_speed": -5 } },
+				{ "level": 2, "cost": 50, "effect": { "fishing_speed": -5 } },
+				{ "level": 3, "cost": 100, "effect": { "fishing_speed": -5 } }
 			]
 		},
 		{
@@ -17,8 +17,8 @@
 			"description": "A box filled with various baits to increase your chances of catching fish",
 			"max_level": 2,
 			"levels": [
-				{ "level": 1, "cost": 50, "effect": { "fish_chance": 0.5 }, "description": "A shiny lure that draws fish in" },
-				{ "level": 2, "cost": 100, "effect": { "fish_chance": 0.5 }, "description": "A glowing lure with irresistible bait" }
+				{ "level": 1, "cost": 50, "effect": { "fish_chance": 0.5 } },
+				{ "level": 2, "cost": 100, "effect": { "fish_chance": 0.5 } }
 			]
 		},
 		{
@@ -27,9 +27,9 @@
 			"description": "A special hook designed to draws the attention of rare fish",
 			"max_level": 3,
 			"levels": [
-				{ "level": 1, "cost": 150, "effect": { "rare_fish_chance": 0.5 }, "description": "A gilded hook with an unnatural shimmer" },
-				{ "level": 2, "cost": 350, "effect": { "rare_fish_chance": 0.5 }, "description": "A refined hook engraved with runes" },
-				{ "level": 3, "cost": 700, "effect": { "rare_fish_chance": 0.5 }, "description": "A legendary hook said to attract mythical fish" }
+				{ "level": 1, "cost": 150, "effect": { "rare_fish_chance": 0.5 } },
+				{ "level": 2, "cost": 350, "effect": { "rare_fish_chance": 0.5 } },
+				{ "level": 3, "cost": 700, "effect": { "rare_fish_chance": 0.5 } }
 			]
 		},
 		{
@@ -38,9 +38,9 @@
 			"description": "A magical charm that permanently boosts your fishing stamina",
 			"max_level": 3,
 			"levels": [
-				{ "level": 1, "cost": 10, "effect": { "fishing_stamina": 50 }, "description": "A small potion that increases stamina" },
-				{ "level": 2, "cost": 50, "effect": { "fishing_stamina": 50 }, "description": "A larger flask with a stronger brew" },
-				{ "level": 3, "cost": 120, "effect": { "fishing_stamina": 50 }, "description": "An overflowing flask that maximizes your endurance" }
+				{ "level": 1, "cost": 10, "effect": { "fishing_stamina": 50 } },
+				{ "level": 2, "cost": 50, "effect": { "fishing_stamina": 50 } },
+				{ "level": 3, "cost": 120, "effect": { "fishing_stamina": 50 } }
 			]
 		}
 	]
