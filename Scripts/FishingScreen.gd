@@ -50,6 +50,7 @@ const FISH_OUTLINE_TEXTURES := {
 @onready var social_send_button: Button = $SocialDropdown/MarginContainer/VBoxContainer/InputRow/SendButton
 
 var cast_cooldown_remaining: float = 0.0
+var cast_cooldown_total: float = 0.0
 var stamina: float = 100.0
 var max_stamina: float = 100.0
 var card_fish_ids: Array[int] = []
@@ -89,7 +90,11 @@ func _process(delta: float) -> void:
 	var regen_rate: float = max(_get_stat_float("fishing_stamina_regen", BASE_REGEN_PER_SECOND), 0.0)
 	stamina = min(stamina + regen_rate * delta, max_stamina)
 
-	var cooldown_ratio: float = 1.0 - (cast_cooldown_remaining / REEL_COOLDOWN_SECONDS)
+	var cooldown_ratio: float
+	if cast_cooldown_total > 0.0:
+		cooldown_ratio = 1.0 - (cast_cooldown_remaining / cast_cooldown_total)
+	else:
+		cooldown_ratio = 1.0
 	cooldown_orb.call("set_progress", clamp(cooldown_ratio, 0.0, 1.0))
 	if _cooldown_orb_activated and cast_cooldown_remaining <= 0.0:
 		cooldown_orb.visible = false
@@ -133,7 +138,8 @@ func _on_fish_button_pressed() -> void:
 		return
 
 	stamina -= stamina_cost
-	cast_cooldown_remaining = _get_cast_cooldown()
+	cast_cooldown_total = _get_cast_cooldown()
+	cast_cooldown_remaining = cast_cooldown_total
 	if _cooldown_orb_activated:
 		cooldown_orb.visible = true
 
@@ -155,7 +161,7 @@ func _on_fish_button_pressed() -> void:
 		return
 
 	var fish_data: Dictionary = fish_data_variant
-	var fish_name: String = String(fish_data.get("name", "Unknown fish"))
+	var _fish_name: String = String(fish_data.get("name", "Unknown fish"))
 
 	var fish_size: int = _roll_from_range(_dict_from_variant(fish_data.get("size", {})), 1, 1)
 	var value: int = _roll_from_range(_dict_from_variant(fish_data.get("value", {})), 1, 1)
@@ -168,7 +174,7 @@ func _on_fish_button_pressed() -> void:
 
 	InventoryManager.add_fish(fish_id, fish_size, value, location_id)
 
-	_refresh_ui("You caught a %s!" % fish_name, fish_id)
+	_refresh_ui("You caught a %s!" % _fish_name, fish_id)
 	_update_inventory_display()
 
 
@@ -325,9 +331,7 @@ func _connect_social_controls() -> void:
 
 func _build_inventory_cards() -> void:
 	for child in grid_container.get_children():
-		child.free()
-
-	card_fish_ids.clear()
+			child.queue_free()
 	var inventory: Array = InventoryManager.get_inventory()
 	var fish_counts: Dictionary = {}
 	for item in inventory:
@@ -780,24 +784,6 @@ func _update_stamina_label() -> void:
 	stamina_label.text = "Stamina: %d / %d" % [int(round(stamina)), int(round(max_stamina))]
 
 
-func _connect_sell_buttons() -> void:
-	for i in range(1, 5):
-		var fish_card: Control = grid_container.get_child(i - 1)
-		if fish_card:
-			var sell_button: Button = fish_card.find_child("SellButton")
-			var sell_all_button: Button = fish_card.find_child("SellAllButton")
-			var eat_button: Button = fish_card.find_child("EatButton")
-			
-			if sell_button and not sell_button.pressed.is_connected(Callable(self, "_on_sell_button_pressed")):
-				sell_button.pressed.connect(Callable(self, "_on_sell_button_pressed").bindv([i - 1]))
-			
-			if sell_all_button and not sell_all_button.pressed.is_connected(Callable(self, "_on_sell_all_button_pressed")):
-				sell_all_button.pressed.connect(Callable(self, "_on_sell_all_button_pressed").bindv([i - 1]))
-
-			if eat_button and not eat_button.pressed.is_connected(Callable(self, "_on_eat_button_pressed")):
-				eat_button.pressed.connect(Callable(self, "_on_eat_button_pressed").bindv([i - 1]))
-
-
 func _on_sell_button_pressed(card_index: int) -> void:
 	if card_index < 0 or card_index >= card_fish_ids.size():
 		return
@@ -806,28 +792,22 @@ func _on_sell_button_pressed(card_index: int) -> void:
 	if fish_id < 0:
 		return
 
-	var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
-	var fish_name: String = String(fish_data.get("name", "Fish #%d" % fish_id))
-	
-	if fish_id < 0:
-		return
-	
 	var inventory: Array = InventoryManager.get_inventory()
 	var found_index: int = -1
 	for i in range(inventory.size()):
 		if _normalized_fish_id(inventory[i].get("fish_id", -1)) == fish_id:
 			found_index = i
 			break
-	
+
 	if found_index < 0:
 		return
-	
+
 	var fish_value: int = inventory[found_index].get("value", 0)
 	var current_coins: int = int(Data.save_data["player"].get("coins", 0))
 	Data.save_data["player"]["coins"] = current_coins + fish_value
-	
+
 	InventoryManager.remove_fish(found_index)
-	
+
 	_refresh_hud_only()
 	_update_inventory_display()
 
@@ -840,36 +820,30 @@ func _on_sell_all_button_pressed(card_index: int) -> void:
 	if fish_id < 0:
 		return
 
-	var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
-	var fish_name: String = String(fish_data.get("name", "Fish #%d" % fish_id))
-	
-	if fish_id < 0:
-		return
-	
 	var inventory: Array = InventoryManager.get_inventory()
 	var total_value: int = 0
 	var fish_count: int = 0
 	var indices_to_remove: Array = []
-	
+
 	for i in range(inventory.size()):
 		if _normalized_fish_id(inventory[i].get("fish_id", -1)) == fish_id:
 			total_value += inventory[i].get("value", 0)
 			fish_count += 1
 			indices_to_remove.append(i)
-	
+
 	if fish_count == 0:
 		return
-	
+
 	var current_coins: int = int(Data.save_data["player"].get("coins", 0))
 	Data.save_data["player"]["coins"] = current_coins + total_value
-	
+
 	indices_to_remove.sort()
 	indices_to_remove.reverse()
 	for index in indices_to_remove:
 		InventoryManager.remove_fish(index, false)
 
 	File.save_game()
-	
+
 	_refresh_hud_only()
 	_update_inventory_display()
 
@@ -886,7 +860,6 @@ func _on_eat_button_pressed(card_index: int) -> void:
 		return
 
 	var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
-	var fish_name: String = String(fish_data.get("name", "Fish #%d" % fish_id))
 	var stamina_gain: float = float(fish_data.get("eat_stamina", 5.0))
 
 	var inventory: Array = InventoryManager.get_inventory()

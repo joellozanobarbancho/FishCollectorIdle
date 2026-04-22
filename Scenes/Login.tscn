@@ -47,6 +47,18 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_error_bubble"]
+bg_color = Color(0.13, 0.2, 0.35, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.92, 0.78, 0.2, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
 [node name="Login" type="Control" unique_id=955846762]
 layout_mode = 3
 anchors_preset = 15
@@ -70,12 +82,12 @@ stretch_mode = 5
 
 [node name="BackToHomeButton" type="Button" parent="." unique_id=400077034]
 visible = false
+z_index = 10
 layout_mode = 1
 offset_left = 10.0
 offset_top = 10.0
 offset_right = 96.0
 offset_bottom = 44.0
-z_index = 10
 text = "Back"
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=709278563]
@@ -131,10 +143,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "Back"
 
-[node name="StatusLabel" type="Label" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer"]
-layout_mode = 2
-autowrap_mode = 3
-
 [node name="ForgotPasswordButton" type="Button" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=972853916]
 layout_mode = 2
 size_flags_horizontal = 4
@@ -147,7 +155,41 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_link_button_hover")
 text = "Forgot your password?"
 flat = true
 
+[node name="ErrorPopupLayer" type="CanvasLayer" parent="." unique_id=1641245214]
+
+[node name="ErrorPopupContainer" type="PanelContainer" parent="ErrorPopupLayer" unique_id=831189079]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -60.0
+offset_right = 180.0
+offset_bottom = 60.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_error_bubble")
+
+[node name="ErrorPopupMargin" type="MarginContainer" parent="ErrorPopupLayer/ErrorPopupContainer" unique_id=1525176659]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ErrorPopupLabel" type="Label" parent="ErrorPopupLayer/ErrorPopupContainer/ErrorPopupMargin" unique_id=132674017]
+custom_minimum_size = Vector2(300, 50)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "Error message"
+autowrap_mode = 3
+text_overrun_behavior = 3
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [connection signal="pressed" from="BackToHomeButton" to="." method="_on_back_to_home_button_pressed"]
-[connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/BackButton" to="." method="_on_back_to_home_button_pressed"]
 [connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/LoginButton" to="." method="_on_login_button_pressed"]
+[connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/BackButton" to="." method="_on_back_to_home_button_pressed"]
 [connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/ForgotPasswordButton" to="." method="_on_forgot_password_button_pressed"]
