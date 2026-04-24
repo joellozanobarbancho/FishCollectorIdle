@@ -15,6 +15,50 @@ corner_radius_top_right = 14
 corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_link_button"]
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.64, 1, 0.6)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_link_button_hover"]
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.2, 0.45, 0.9, 0.14)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.72, 1, 0.9)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_error_bubble"]
+bg_color = Color(0.13, 0.2, 0.35, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.92, 0.78, 0.2, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
 [node name="Register" type="Control" unique_id=302787339]
 layout_mode = 3
 anchors_preset = 15
@@ -36,45 +80,39 @@ texture = ExtResource("1_g6fiq")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="PopupOverlay" type="ColorRect" parent="." unique_id=1402998700]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(0, 0, 0, 0.45)
+[node name="ErrorPopupLayer" type="CanvasLayer" parent="." unique_id=1402998700]
 
-[node name="CatchPopup" type="PanelContainer" parent="." unique_id=596064759]
+[node name="ErrorPopupContainer" type="PanelContainer" parent="ErrorPopupLayer" unique_id=596064759]
 visible = false
-layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -170.0
-offset_top = -50.0
-offset_right = 170.0
-offset_bottom = 50.0
+offset_left = -180.0
+offset_top = -60.0
+offset_right = 180.0
+offset_bottom = 60.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_error_bubble")
 
-[node name="PopupMargin" type="MarginContainer" parent="CatchPopup" unique_id=383588123]
+[node name="ErrorPopupMargin" type="MarginContainer" parent="ErrorPopupLayer/ErrorPopupContainer" unique_id=383588123]
 layout_mode = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 16
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
 
-[node name="PopupLabel" type="Label" parent="CatchPopup/PopupMargin" unique_id=815253492]
+[node name="ErrorPopupLabel" type="Label" parent="ErrorPopupLayer/ErrorPopupContainer/ErrorPopupMargin" unique_id=815253492]
+custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
-text = "Account created successfully!"
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "Error message"
+autowrap_mode = 3
+text_overrun_behavior = 3
 horizontal_alignment = 1
 vertical_alignment = 1
-autowrap_mode = 3
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=1971837766]
 layout_mode = 1
@@ -147,10 +185,6 @@ text = "Create Account"
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Back"
-
-[node name="StatusLabel" type="Label" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer"]
-layout_mode = 2
-autowrap_mode = 3
 
 [connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/BackButton" to="." method="_on_back_to_home_button_pressed"]
 [connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/RegisterButton" to="." method="_on_register_button_pressed"]
