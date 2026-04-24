@@ -25,6 +25,7 @@ FirebaseManager="*uid://dg6cbnryipgge"
 UpgradeManager="*uid://b8yods8fd6fbs"
 DataManager="*uid://b8e2dx32msexg"
 LevelManager="*uid://biule74gcsyd2"
+QuestManager="*uid://b74bwqc5v2f8f"
 
 [display]
 

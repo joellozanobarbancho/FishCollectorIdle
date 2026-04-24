@@ -56,5 +56,16 @@
         "reward": {
             "coins": 300
         }
+    },
+    {
+        "id": 15,
+        "name": "Pack 2 Unlock",
+        "description": "Complete all quests in Quest Pack 1",
+        "reward": {
+            "coins": 350,
+            "flags": {
+                "quest_pack2_unlocked": true
+            }
+        }
     }
 ]

@@ -15,6 +15,12 @@ const INVENTORY_CARD_FONT_SIZE := 8
 const INVENTORY_GRID_SEPARATION := 6
 const STORE_ITEM_PADDING := 8
 const STORE_ITEM_SEPARATION := 4
+const ACHIEVEMENT_ITEM_PADDING := 8
+const ACHIEVEMENT_ITEM_SEPARATION := 4
+const QUEST_PACK1_PATH := "res://Database/quests/quest_pack1.json"
+const QUEST_PACK2_PATH := "res://Database/quests/quest_pack2.json"
+const QUEST_PACK2_UNLOCK_FLAG := "quest_pack2_unlocked"
+const QUEST_LOCK_ICON_PATH := "res://Assets/UIElements/lock_icon.svg"
 const POPUP_HALF_WIDTH: float = 200.0
 const POPUP_HALF_HEIGHT_TEXT_ONLY: float = 34.0
 const POPUP_HALF_HEIGHT_WITH_FISH: float = 82.0
@@ -48,6 +54,11 @@ const FISH_OUTLINE_TEXTURES := {
 @onready var social_chat_log: RichTextLabel = $SocialDropdown/MarginContainer/VBoxContainer/ChatPanel/ChatMargin/ChatLog
 @onready var social_message_input: LineEdit = $SocialDropdown/MarginContainer/VBoxContainer/InputRow/MessageInput
 @onready var social_send_button: Button = $SocialDropdown/MarginContainer/VBoxContainer/InputRow/SendButton
+@onready var quest_dropdown: Control = $QuestDropdown
+@onready var quest_list: VBoxContainer = $QuestDropdown/MarginContainer/VBoxContainer/AchievementsPanel/AchievementsMargin/ScrollContainer/QuestList
+@onready var reward_popup_layer: CanvasLayer = $RewardPopupLayer
+@onready var reward_popup_container: PanelContainer = $RewardPopupLayer/RewardPopupContainer
+@onready var reward_popup_label: Label = $RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardPopupLabel
 
 var cast_cooldown_remaining: float = 0.0
 var cast_cooldown_total: float = 0.0
@@ -61,6 +72,8 @@ var _chat_request_in_flight: bool = false
 var _presence_request_in_flight: bool = false
 var _last_chat_render_signature: String = ""
 var _pending_local_chat_messages: Array = []
+var _previous_quest_states: Dictionary = {}
+var _reward_popup_revision: int = 0
 
 
 func _ready() -> void:
@@ -72,11 +85,14 @@ func _ready() -> void:
 	store_dropdown.visible = false
 	inventory_dropdown.visible = false
 	social_dropdown.visible = false
+	quest_dropdown.visible = false
 	popup_layer.visible = false
 	popup_panel.visible = false
 	cooldown_orb.visible = false
 	cooldown_orb.call("set_progress", 1.0)
 	social_chat_log.add_theme_color_override("default_color", Color(1, 1, 1, 1))
+	reward_popup_layer.visible = false
+	reward_popup_container.visible = false
 	_refresh_ui("Click to start fishing!")
 	_build_store_items()
 	_build_inventory_cards()
@@ -86,6 +102,8 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if cast_cooldown_remaining > 0.0:
 		cast_cooldown_remaining = max(cast_cooldown_remaining - delta, 0.0)
+
+	_detect_and_claim_completed_quests()
 
 	var regen_rate: float = max(_get_stat_float("fishing_stamina_regen", BASE_REGEN_PER_SECOND), 0.0)
 	stamina = min(stamina + regen_rate * delta, max_stamina)
@@ -106,7 +124,7 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible:
+	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible or quest_dropdown.visible:
 		return
 	if not (event is InputEventMouseButton):
 		return
@@ -173,6 +191,7 @@ func _on_fish_button_pressed() -> void:
 		fish_size = int(round(float(fish_size) * 1.2))
 
 	InventoryManager.add_fish(fish_id, fish_size, value, location_id)
+	_register_fish_catch(fish_data, is_rare)
 
 	_refresh_ui("You caught a %s!" % _fish_name, fish_id)
 	_update_inventory_display()
@@ -184,6 +203,7 @@ func _on_store_button_pressed() -> void:
 	if store_dropdown.visible:
 		inventory_dropdown.visible = false
 		social_dropdown.visible = false
+		quest_dropdown.visible = false
 		_build_store_items()
 
 
@@ -192,8 +212,18 @@ func _on_inventory_button_pressed() -> void:
 	if inventory_dropdown.visible:
 		store_dropdown.visible = false
 		social_dropdown.visible = false
+		quest_dropdown.visible = false
 	if inventory_dropdown.visible:
 		_update_inventory_display()
+
+
+func _on_quests_button_pressed() -> void:
+	quest_dropdown.visible = not quest_dropdown.visible
+	if quest_dropdown.visible:
+		store_dropdown.visible = false
+		inventory_dropdown.visible = false
+		social_dropdown.visible = false
+		_build_quest_items()
 
 
 func _on_social_button_pressed() -> void:
@@ -201,6 +231,7 @@ func _on_social_button_pressed() -> void:
 	if social_dropdown.visible:
 		store_dropdown.visible = false
 		inventory_dropdown.visible = false
+		quest_dropdown.visible = false
 		_refresh_social_panel(true)
 	else:
 		_chat_poll_timer = CHAT_POLL_INTERVAL_SECONDS
@@ -347,6 +378,336 @@ func _build_inventory_cards() -> void:
 		var count: int = int(fish_counts.get(fish_id, 0))
 		card_fish_ids.append(fish_id)
 		grid_container.add_child(_create_inventory_card(fish_id, card_fish_ids.size() - 1, count))
+
+
+func _build_quest_items() -> void:
+	for child in quest_list.get_children():
+		child.queue_free()
+
+	for quest_id in _get_visible_quest_ids():
+		var quest_data: Dictionary = _get_quest_data_by_id(quest_id)
+		if quest_data.is_empty():
+			continue
+		quest_list.add_child(_create_quest_row(quest_id, quest_data))
+
+
+func _create_quest_row(quest_id: int, quest_data: Dictionary) -> PanelContainer:
+	var progress: Dictionary = _get_quest_progress(quest_id, quest_data)
+	var is_locked: bool = _is_quest_locked(quest_id)
+	var title_text: String = str(quest_data.get("name", "Quest #%d" % quest_id))
+	var description_text: String = str(quest_data.get("description", ""))
+	var reward_variant: Variant = quest_data.get("reward", {})
+	var reward_text: String = "Reward: --"
+	if typeof(reward_variant) == TYPE_DICTIONARY:
+		var reward: Dictionary = reward_variant
+		if reward.has("coins"):
+			reward_text = "Reward: %d coins" % int(reward.get("coins", 0))
+
+	var row := PanelContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.custom_minimum_size = Vector2(0, 112)
+	if is_locked:
+		row.modulate = Color(0.62, 0.62, 0.62, 1.0)
+
+	var margin := MarginContainer.new()
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.add_theme_constant_override("margin_left", ACHIEVEMENT_ITEM_PADDING)
+	margin.add_theme_constant_override("margin_top", ACHIEVEMENT_ITEM_PADDING)
+	margin.add_theme_constant_override("margin_right", ACHIEVEMENT_ITEM_PADDING)
+	margin.add_theme_constant_override("margin_bottom", ACHIEVEMENT_ITEM_PADDING)
+	row.add_child(margin)
+
+	var content := VBoxContainer.new()
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", ACHIEVEMENT_ITEM_SEPARATION)
+	margin.add_child(content)
+
+	var title_row := HBoxContainer.new()
+	title_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_row.add_theme_constant_override("separation", 6)
+	content.add_child(title_row)
+
+	var title_label := Label.new()
+	title_label.text = title_text
+	title_label.clip_text = true
+	title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_row.add_child(title_label)
+
+	if is_locked:
+		var lock_icon := TextureRect.new()
+		lock_icon.custom_minimum_size = Vector2(18, 18)
+		lock_icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		lock_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		lock_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		var loaded_lock: Variant = load(QUEST_LOCK_ICON_PATH)
+		if loaded_lock is Texture2D:
+			lock_icon.texture = loaded_lock
+		title_row.add_child(lock_icon)
+
+	var description_label := Label.new()
+	description_label.text = description_text
+	if is_locked:
+		description_label.text = "Unlock this quest by completing all quests in Pack 1."
+	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(description_label)
+
+	var bar := ProgressBar.new()
+	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar.custom_minimum_size = Vector2(0, 12)
+	bar.show_percentage = false
+	bar.min_value = 0.0
+	bar.max_value = max(float(progress.get("target", 1)), 1.0)
+	bar.value = min(float(progress.get("current", 0)), bar.max_value)
+	if is_locked:
+		bar.max_value = 1.0
+		bar.value = 0.0
+	content.add_child(bar)
+
+	var status_label := Label.new()
+	status_label.text = "%s | %d/%d" % [reward_text, int(progress.get("current", 0)), int(progress.get("target", 1))]
+	if is_locked:
+		status_label.text = "Locked | Complete all Pack 1 quests"
+	content.add_child(status_label)
+
+	if bool(progress.get("is_claimed", false)):
+		var done_label := Label.new()
+		done_label.text = "DONE"
+		done_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		done_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		done_label.add_theme_color_override("font_color", Color(0.4, 0.8, 0.4))
+		content.add_child(done_label)
+
+	return row
+
+
+func _get_visible_quest_ids() -> Array[int]:
+	var ids: Array[int] = _load_quest_ids_from_pack(QUEST_PACK1_PATH)
+	ids.append_array(_load_quest_ids_from_pack(QUEST_PACK2_PATH))
+	return ids
+
+
+func _is_quest_locked(quest_id: int) -> bool:
+	if _is_pack2_unlocked():
+		return false
+	var pack2_ids: Array[int] = _load_quest_ids_from_pack(QUEST_PACK2_PATH)
+	return pack2_ids.has(quest_id)
+
+
+func _load_quest_ids_from_pack(pack_path: String) -> Array[int]:
+	var ids: Array[int] = []
+	if not FileAccess.file_exists(pack_path):
+		return ids
+
+	var file := FileAccess.open(pack_path, FileAccess.READ)
+	if file == null:
+		return ids
+
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if typeof(parsed) != TYPE_ARRAY:
+		return ids
+
+	for quest_variant in parsed:
+		if typeof(quest_variant) != TYPE_DICTIONARY:
+			continue
+		var quest_data: Dictionary = quest_variant
+		if not quest_data.has("id"):
+			continue
+		ids.append(int(quest_data.get("id", -1)))
+	return ids
+
+
+func _is_pack2_unlocked() -> bool:
+	var player: Dictionary = Data.save_data.get("player", {})
+	return bool(player.get(QUEST_PACK2_UNLOCK_FLAG, false))
+
+
+func _get_quest_progress(quest_id: int, quest_data: Dictionary) -> Dictionary:
+	var description: String = str(quest_data.get("description", "")).to_lower()
+	var target: int = max(_parse_first_number_from_text(description), 1)
+	var current: int = 0
+
+	var player: Dictionary = Data.save_data.get("player", {})
+	var quest_progress: Dictionary = _get_or_create_quest_progress()
+	var achievements: Array = player.get("achievements", [])
+	var claimed_ids := _get_claimed_quest_ids(achievements)
+
+	if _quest_unlocks_pack2(quest_data):
+		var pack1_ids: Array[int] = _load_quest_ids_from_pack(QUEST_PACK1_PATH)
+		pack1_ids.erase(quest_id)
+		target = max(pack1_ids.size(), 1)
+		current = 0
+		for required_id in pack1_ids:
+			if claimed_ids.has(required_id):
+				current += 1
+		var is_claimed_unlock: bool = _is_quest_claimed(quest_id)
+		return {
+			"current": current,
+			"target": target,
+			"is_completed": current >= target,
+			"is_claimed": is_claimed_unlock
+		}
+
+	if description.contains("catch") and description.contains("fish"):
+		if description.contains("first fish"):
+			target = 1
+		current = int(quest_progress.get("total_fish_caught", 0))
+		if description.contains("rare"):
+			target = 1
+			current = int(quest_progress.get("rare_fish_caught", 0))
+		elif description.contains("legendary"):
+			target = 1
+			current = int(quest_progress.get("legendary_fish_caught", 0))
+	elif description.contains("earn") and description.contains("coins"):
+		current = int(player.get("coins", 0))
+	elif description.contains("reach level"):
+		current = int(player.get("level", 1))
+	elif description.contains("sell") and description.contains("different fish"):
+		var unique_sold: Dictionary = quest_progress.get("unique_fish_sold", {})
+		current = unique_sold.size()
+	elif description.contains("complete") and description.contains("quests"):
+		if description.contains("quest pack 2"):
+			var required_ids: Array[int] = _load_quest_ids_from_pack(QUEST_PACK2_PATH)
+			required_ids.erase(quest_id)
+			target = max(required_ids.size(), 1)
+			for required_id in required_ids:
+				if not claimed_ids.has(required_id):
+					return {
+						"current": 0,
+						"target": target,
+						"is_completed": false,
+						"is_claimed": _is_quest_claimed(quest_id)
+					}
+			current = target
+		else:
+			current = achievements.size()
+
+	var is_claimed: bool = _is_quest_claimed(quest_id)
+	var is_completed: bool = current >= target
+	return {
+		"current": current,
+		"target": target,
+		"is_completed": is_completed,
+		"is_claimed": is_claimed
+	}
+
+
+func _parse_first_number_from_text(text: String) -> int:
+	var number_text: String = ""
+	for i in text.length():
+		var ch: String = text.substr(i, 1)
+		if ch >= "0" and ch <= "9":
+			number_text += ch
+		elif not number_text.is_empty():
+			break
+	if number_text.is_empty() or not number_text.is_valid_int():
+		return 1
+	return max(int(number_text), 1)
+
+
+func _get_claimed_quest_ids(achievements: Array) -> Dictionary:
+	var ids := {}
+	for entry_variant in achievements:
+		if typeof(entry_variant) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_variant
+		ids[int(entry.get("quest_id", -1))] = true
+	return ids
+
+
+func _is_quest_claimed(quest_id: int) -> bool:
+	var player: Dictionary = Data.save_data.get("player", {})
+	var achievements: Array = player.get("achievements", [])
+	for entry_variant in achievements:
+		if typeof(entry_variant) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_variant
+		if int(entry.get("quest_id", -1)) == quest_id:
+			return true
+	return false
+
+
+func _detect_and_claim_completed_quests() -> void:
+	var visible_ids: Array[int] = _get_visible_quest_ids()
+	for quest_id in visible_ids:
+		var current_state: Dictionary = _get_quest_progress(quest_id, _get_quest_data_by_id(quest_id))
+		var was_completed: bool = false
+		var is_now_completed: bool = current_state.get("is_completed", false) and not current_state.get("is_claimed", false)
+		if _previous_quest_states.has(quest_id):
+			var prev_state: Dictionary = _previous_quest_states[quest_id]
+			was_completed = prev_state.get("is_completed", false)
+
+		if not was_completed and is_now_completed:
+			_claim_quest_silently(quest_id, _get_quest_data_by_id(quest_id))
+
+		_previous_quest_states[quest_id] = current_state
+
+
+func _claim_quest_silently(quest_id: int, quest_data: Dictionary) -> void:
+	if _is_quest_locked(quest_id):
+		return
+	if QuestManager.claim_quest(quest_id):
+		_show_reward_popup(quest_data)
+		_build_quest_items()
+
+
+func _show_reward_popup(quest_data: Dictionary) -> void:
+	_reward_popup_revision += 1
+	var current_revision: int = _reward_popup_revision
+
+	var quest_name: String = str(quest_data.get("name", "Quest"))
+	var reward_variant: Variant = quest_data.get("reward", {})
+	var reward_text: String = ""
+	if typeof(reward_variant) == TYPE_DICTIONARY:
+		var reward: Dictionary = reward_variant
+		if reward.has("coins"):
+			reward_text = "%d coins" % int(reward.get("coins", 0))
+
+	reward_popup_label.text = "%s\n%s" % [quest_name, reward_text]
+	reward_popup_layer.visible = true
+	reward_popup_container.visible = true
+
+	await get_tree().create_timer(2.5).timeout
+	if current_revision == _reward_popup_revision:
+		reward_popup_container.visible = false
+		reward_popup_layer.visible = false
+
+
+func _get_quest_data_by_id(quest_id: int) -> Dictionary:
+	if DataManager.quests_db.has(quest_id):
+		var by_int: Variant = DataManager.quests_db[quest_id]
+		if typeof(by_int) == TYPE_DICTIONARY:
+			return by_int
+
+	var quest_id_as_float: float = float(quest_id)
+	if DataManager.quests_db.has(quest_id_as_float):
+		var by_float: Variant = DataManager.quests_db[quest_id_as_float]
+		if typeof(by_float) == TYPE_DICTIONARY:
+			return by_float
+
+	var quest_id_as_string: String = str(quest_id)
+	if DataManager.quests_db.has(quest_id_as_string):
+		var by_string: Variant = DataManager.quests_db[quest_id_as_string]
+		if typeof(by_string) == TYPE_DICTIONARY:
+			return by_string
+
+	return {}
+
+
+func _quest_unlocks_pack2(quest_data: Dictionary) -> bool:
+	if not quest_data.has("reward"):
+		return false
+	var reward_variant: Variant = quest_data.get("reward", {})
+	if typeof(reward_variant) != TYPE_DICTIONARY:
+		return false
+	var reward: Dictionary = reward_variant
+	if not reward.has("flags"):
+		return false
+	var flags_variant: Variant = reward.get("flags", {})
+	if typeof(flags_variant) != TYPE_DICTIONARY:
+		return false
+	var flags: Dictionary = flags_variant
+	return bool(flags.get(QUEST_PACK2_UNLOCK_FLAG, false))
 
 
 func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelContainer:
@@ -704,6 +1065,13 @@ func _ensure_player_defaults() -> void:
 		player["items_owned"] = {}
 	if not player.has("current_stats"):
 		player["current_stats"] = {}
+	if not player.has("achievements"):
+		player["achievements"] = []
+	if not player.has("level"):
+		player["level"] = 1
+	if not player.has(QUEST_PACK2_UNLOCK_FLAG):
+		player[QUEST_PACK2_UNLOCK_FLAG] = false
+	_ensure_quest_progress_defaults(player)
 
 	Data.save_data["player"] = player
 
@@ -805,6 +1173,7 @@ func _on_sell_button_pressed(card_index: int) -> void:
 	var fish_value: int = inventory[found_index].get("value", 0)
 	var current_coins: int = int(Data.save_data["player"].get("coins", 0))
 	Data.save_data["player"]["coins"] = current_coins + fish_value
+	_register_unique_fish_sold(fish_id)
 
 	InventoryManager.remove_fish(found_index)
 
@@ -836,6 +1205,7 @@ func _on_sell_all_button_pressed(card_index: int) -> void:
 
 	var current_coins: int = int(Data.save_data["player"].get("coins", 0))
 	Data.save_data["player"]["coins"] = current_coins + total_value
+	_register_unique_fish_sold(fish_id)
 
 	indices_to_remove.sort()
 	indices_to_remove.reverse()
@@ -899,3 +1269,54 @@ func _normalized_fish_id(raw_fish_id: Variant) -> int:
 			if String(raw_fish_id).is_valid_int():
 				return int(raw_fish_id)
 	return -1
+
+
+func _register_fish_catch(fish_data: Dictionary, is_rare: bool) -> void:
+	var quest_progress: Dictionary = _get_or_create_quest_progress()
+	quest_progress["total_fish_caught"] = int(quest_progress.get("total_fish_caught", 0)) + 1
+	if is_rare:
+		quest_progress["rare_fish_caught"] = int(quest_progress.get("rare_fish_caught", 0)) + 1
+	if int(fish_data.get("rarity", 0)) >= 3:
+		quest_progress["legendary_fish_caught"] = int(quest_progress.get("legendary_fish_caught", 0)) + 1
+
+
+func _register_unique_fish_sold(fish_id: int) -> void:
+	if fish_id < 0:
+		return
+	var quest_progress: Dictionary = _get_or_create_quest_progress()
+	var unique_sold: Dictionary = quest_progress.get("unique_fish_sold", {})
+	unique_sold[str(fish_id)] = true
+	quest_progress["unique_fish_sold"] = unique_sold
+
+
+func _get_or_create_quest_progress() -> Dictionary:
+	var player: Dictionary = Data.save_data.get("player", {})
+	if not player.has("quest_progress") or typeof(player["quest_progress"]) != TYPE_DICTIONARY:
+		player["quest_progress"] = {}
+	var quest_progress: Dictionary = player["quest_progress"]
+	if not quest_progress.has("total_fish_caught"):
+		quest_progress["total_fish_caught"] = 0
+	if not quest_progress.has("rare_fish_caught"):
+		quest_progress["rare_fish_caught"] = 0
+	if not quest_progress.has("legendary_fish_caught"):
+		quest_progress["legendary_fish_caught"] = 0
+	if not quest_progress.has("unique_fish_sold") or typeof(quest_progress["unique_fish_sold"]) != TYPE_DICTIONARY:
+		quest_progress["unique_fish_sold"] = {}
+	player["quest_progress"] = quest_progress
+	Data.save_data["player"] = player
+	return quest_progress
+
+
+func _ensure_quest_progress_defaults(player: Dictionary) -> void:
+	if not player.has("quest_progress") or typeof(player["quest_progress"]) != TYPE_DICTIONARY:
+		player["quest_progress"] = {}
+	var quest_progress: Dictionary = player["quest_progress"]
+	if not quest_progress.has("total_fish_caught"):
+		quest_progress["total_fish_caught"] = 0
+	if not quest_progress.has("rare_fish_caught"):
+		quest_progress["rare_fish_caught"] = 0
+	if not quest_progress.has("legendary_fish_caught"):
+		quest_progress["legendary_fish_caught"] = 0
+	if not quest_progress.has("unique_fish_sold") or typeof(quest_progress["unique_fish_sold"]) != TYPE_DICTIONARY:
+		quest_progress["unique_fish_sold"] = {}
+	player["quest_progress"] = quest_progress
