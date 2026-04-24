@@ -466,6 +466,92 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 6
 
+[node name="SettingsDropdown" type="Control" parent="." unique_id=1340027900]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 84.0
+offset_right = -12.0
+offset_bottom = -48.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="SettingsDropdown" unique_id=1340027901]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 12
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SettingsDropdown/MarginContainer" unique_id=1340027902]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="HeaderPanel" type="Panel" parent="SettingsDropdown/MarginContainer/VBoxContainer" unique_id=1340027903]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+
+[node name="HeaderMargin" type="MarginContainer" parent="SettingsDropdown/MarginContainer/VBoxContainer/HeaderPanel" unique_id=1340027904]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="HeaderLabel" type="Label" parent="SettingsDropdown/MarginContainer/VBoxContainer/HeaderPanel/HeaderMargin" unique_id=1340027905]
+layout_mode = 2
+text = "SETTINGS"
+
+[node name="SettingsPanel" type="Panel" parent="SettingsDropdown/MarginContainer/VBoxContainer" unique_id=1340027906]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="SettingsMargin" type="MarginContainer" parent="SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel" unique_id=1340027907]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="SettingsList" type="VBoxContainer" parent="SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin" unique_id=1340027908]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="ExitButton" type="Button" parent="SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList" unique_id=1340027909]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 50)
+text = "Exit Game"
+
+[node name="ResetDataButton" type="Button" parent="SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList" unique_id=1340027910]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 50)
+text = "Reset User Data"
+
 [node name="RewardPopupLayer" type="CanvasLayer" parent="."]
 layer = 51
 visible = false
@@ -570,3 +656,4 @@ clip_text = true
 [connection signal="pressed" from="BottomNavBar/MarginContainer/HBoxContainer/InventoryButton" to="." method="_on_inventory_button_pressed"]
 [connection signal="pressed" from="BottomNavBar/MarginContainer/HBoxContainer/QuestsButton" to="." method="_on_quests_button_pressed"]
 [connection signal="pressed" from="BottomNavBar/MarginContainer/HBoxContainer/SocialButton" to="." method="_on_social_button_pressed"]
+[connection signal="pressed" from="BottomNavBar/MarginContainer/HBoxContainer/OptionsButton" to="." method="_on_settings_button_pressed"]

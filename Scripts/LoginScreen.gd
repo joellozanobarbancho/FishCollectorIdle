@@ -59,6 +59,12 @@ func _on_login_button_pressed() -> void:
 		await get_tree().create_timer(0.7).timeout
 		get_tree().change_scene_to_file(REGISTER_SCENE_PATH)
 		return
+	
+	if auth_error == "Account data not found. Try to Register.":
+		_show_error_popup("Account was deleted. Please register again...")
+		await get_tree().create_timer(0.7).timeout
+		get_tree().change_scene_to_file(REGISTER_SCENE_PATH)
+		return
 
 	_show_error_popup("Login failed: %s" % auth_error)
 	login_button.disabled = false

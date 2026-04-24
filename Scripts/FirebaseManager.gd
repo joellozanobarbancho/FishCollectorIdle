@@ -118,7 +118,11 @@ func _authenticate(email: String, password: String, is_signup: bool) -> bool:
 			File.new_game()
 		await upload_save()
 	else:
-		await download_save()
+		var download_ok: bool = await download_save()
+		if not download_ok:
+			last_auth_error = "Account data not found. Try to Register."
+			auth_failed.emit(last_auth_error)
+			return false
 
 	return true
 
@@ -329,10 +333,10 @@ func _mark_chat_permission_error_once(context_message: String) -> void:
 	print(CHAT_FIRESTORE_RULES_HINT)
 
 
-func download_save() -> void:
+func download_save() -> bool:
 	if not is_authenticated():
 		save_downloaded.emit(false)
-		return
+		return false
 
 	var response: Dictionary = await _request_json(
 		HTTPClient.METHOD_GET,
@@ -343,12 +347,9 @@ func download_save() -> void:
 
 	if not response["ok"]:
 		if int(response["code"]) == 404:
-			print("No existe save remoto, creando documento inicial")
-			if Data.save_data.is_empty():
-				File.new_game()
-			await upload_save()
-			save_downloaded.emit(true)
-			return
+			print("No existe save remoto, documento fue eliminado o no existe")
+			save_downloaded.emit(false)
+			return false
 
 		if _is_permission_error(response):
 			print("Permisos insuficientes en Firestore; usando guardado local.")
@@ -357,11 +358,11 @@ func download_save() -> void:
 				File.new_game()
 			File.save_game()
 			save_downloaded.emit(true)
-			return
+			return true
 
 		print("Error al descargar save:", response["message"])
 		save_downloaded.emit(false)
-		return
+		return false
 
 	var json: Dictionary = response["json"]
 	if not json.has("fields"):
@@ -369,7 +370,7 @@ func download_save() -> void:
 		if Data.save_data.is_empty():
 			File.new_game()
 		save_downloaded.emit(true)
-		return
+		return true
 
 	var remote_doc: Dictionary = Utilities.fields2dict(json)
 	if remote_doc.has("save_data") and typeof(remote_doc["save_data"]) == TYPE_DICTIONARY:
@@ -377,10 +378,11 @@ func download_save() -> void:
 		File.save_game()
 		print("Save descargado desde Firestore")
 		save_downloaded.emit(true)
-		return
+		return true
 
 	print("Documento remoto no contiene save_data válido")
 	save_downloaded.emit(false)
+	return false
 
 
 func upload_save() -> void:
@@ -414,6 +416,28 @@ func upload_save() -> void:
 		if _is_permission_error(response):
 			print(FIRESTORE_RULES_HINT)
 		save_uploaded.emit(false)
+
+
+func delete_user_data() -> bool:
+	if not is_authenticated():
+		print("No estás autenticado para borrar datos")
+		return false
+
+	var response: Dictionary = await _request_json(
+		HTTPClient.METHOD_DELETE,
+		_firestore_document_url(),
+		"",
+		_auth_headers()
+	)
+
+	if response["ok"]:
+		print("Datos del usuario borrados de Firestore")
+		return true
+	else:
+		print("Error al borrar datos del usuario:", response["message"])
+		if _is_permission_error(response):
+			print(FIRESTORE_RULES_HINT)
+		return false
 
 
 func _is_permission_error(response: Dictionary) -> bool:

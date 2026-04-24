@@ -56,6 +56,9 @@ const FISH_OUTLINE_TEXTURES := {
 @onready var social_send_button: Button = $SocialDropdown/MarginContainer/VBoxContainer/InputRow/SendButton
 @onready var quest_dropdown: Control = $QuestDropdown
 @onready var quest_list: VBoxContainer = $QuestDropdown/MarginContainer/VBoxContainer/AchievementsPanel/AchievementsMargin/ScrollContainer/QuestList
+@onready var settings_dropdown: Control = $SettingsDropdown
+@onready var exit_button: Button = $SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList/ExitButton
+@onready var reset_data_button: Button = $SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList/ResetDataButton
 @onready var reward_popup_layer: CanvasLayer = $RewardPopupLayer
 @onready var reward_popup_container: PanelContainer = $RewardPopupLayer/RewardPopupContainer
 @onready var reward_popup_label: Label = $RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardPopupLabel
@@ -74,6 +77,8 @@ var _last_chat_render_signature: String = ""
 var _pending_local_chat_messages: Array = []
 var _previous_quest_states: Dictionary = {}
 var _reward_popup_revision: int = 0
+var _confirmation_dialog_active: bool = false
+var _confirmation_action: String = ""
 
 
 func _ready() -> void:
@@ -86,6 +91,7 @@ func _ready() -> void:
 	inventory_dropdown.visible = false
 	social_dropdown.visible = false
 	quest_dropdown.visible = false
+	settings_dropdown.visible = false
 	popup_layer.visible = false
 	popup_panel.visible = false
 	cooldown_orb.visible = false
@@ -97,6 +103,7 @@ func _ready() -> void:
 	_build_store_items()
 	_build_inventory_cards()
 	_connect_social_controls()
+	_connect_settings_controls()
 
 
 func _process(delta: float) -> void:
@@ -124,7 +131,7 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible or quest_dropdown.visible:
+	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible or quest_dropdown.visible or settings_dropdown.visible:
 		return
 	if not (event is InputEventMouseButton):
 		return
@@ -232,9 +239,19 @@ func _on_social_button_pressed() -> void:
 		store_dropdown.visible = false
 		inventory_dropdown.visible = false
 		quest_dropdown.visible = false
+		settings_dropdown.visible = false
 		_refresh_social_panel(true)
 	else:
 		_chat_poll_timer = CHAT_POLL_INTERVAL_SECONDS
+
+
+func _on_settings_button_pressed() -> void:
+	settings_dropdown.visible = not settings_dropdown.visible
+	if settings_dropdown.visible:
+		store_dropdown.visible = false
+		inventory_dropdown.visible = false
+		social_dropdown.visible = false
+		quest_dropdown.visible = false
 
 
 func _build_store_items() -> void:
@@ -359,6 +376,12 @@ func _connect_social_controls() -> void:
 		social_send_button.pressed.connect(Callable(self, "_on_social_send_button_pressed"))
 	if social_message_input and not social_message_input.text_submitted.is_connected(Callable(self, "_on_social_message_submitted")):
 		social_message_input.text_submitted.connect(Callable(self, "_on_social_message_submitted"))
+
+func _connect_settings_controls() -> void:
+	if exit_button and not exit_button.pressed.is_connected(Callable(self, "_on_exit_button_pressed")):
+		exit_button.pressed.connect(Callable(self, "_on_exit_button_pressed"))
+	if reset_data_button and not reset_data_button.pressed.is_connected(Callable(self, "_on_reset_data_button_pressed")):
+		reset_data_button.pressed.connect(Callable(self, "_on_reset_data_button_pressed"))
 
 func _build_inventory_cards() -> void:
 	for child in grid_container.get_children():
@@ -1320,3 +1343,142 @@ func _ensure_quest_progress_defaults(player: Dictionary) -> void:
 	if not quest_progress.has("unique_fish_sold") or typeof(quest_progress["unique_fish_sold"]) != TYPE_DICTIONARY:
 		quest_progress["unique_fish_sold"] = {}
 	player["quest_progress"] = quest_progress
+
+
+func _on_exit_button_pressed() -> void:
+	_show_confirmation_dialog("Are you sure you want to exit?", "exit")
+
+
+func _on_reset_data_button_pressed() -> void:
+	_show_confirmation_dialog("Delete all your data? This action cannot be undone.", "reset_data")
+
+
+func _show_confirmation_dialog(message: String, action: String) -> void:
+	if _confirmation_dialog_active:
+		return
+	
+	_confirmation_dialog_active = true
+	_confirmation_action = action
+	
+	# Create dialog background overlay
+	var overlay := Panel.new()
+	overlay.name = "ConfirmationOverlay"
+	overlay.anchors_preset = Control.PRESET_FULL_RECT
+	overlay.anchor_left = 0.0
+	overlay.anchor_top = 0.0
+	overlay.anchor_right = 1.0
+	overlay.anchor_bottom = 1.0
+	overlay.offset_left = 0.0
+	overlay.offset_top = 0.0
+	overlay.offset_right = 0.0
+	overlay.offset_bottom = 0.0
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0, 0, 0, 0.5)
+	overlay.add_theme_stylebox_override("panel", panel_style)
+	overlay.z_index = 100
+	add_child(overlay)
+	
+	# Create dialog panel
+	var dialog := PanelContainer.new()
+	dialog.name = "ConfirmationDialog"
+	dialog.anchors_preset = Control.PRESET_CENTER
+	dialog.anchor_left = 0.5
+	dialog.anchor_top = 0.5
+	dialog.anchor_right = 0.5
+	dialog.anchor_bottom = 0.5
+	dialog.offset_left = -150.0
+	dialog.offset_top = -70.0
+	dialog.offset_right = 150.0
+	dialog.offset_bottom = 70.0
+	dialog.custom_minimum_size = Vector2(300, 140)
+	dialog.z_index = 101
+	add_child(dialog)
+	
+	# Create dialog content
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	dialog.add_child(margin)
+	
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 12)
+	margin.add_child(content)
+	
+	# Message label
+	var label := Label.new()
+	label.text = message
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size = Vector2(250, 0)
+	content.add_child(label)
+	
+	# Buttons container
+	var buttons := HBoxContainer.new()
+	buttons.add_theme_constant_override("separation", 8)
+	buttons.alignment = BoxContainer.ALIGNMENT_END
+	content.add_child(buttons)
+	
+	# No button
+	var no_button := Button.new()
+	no_button.text = "No"
+	no_button.custom_minimum_size = Vector2(80, 0)
+	no_button.pressed.connect(_on_confirmation_no)
+	buttons.add_child(no_button)
+	
+	# Yes button
+	var yes_button := Button.new()
+	yes_button.text = "Yes"
+	yes_button.custom_minimum_size = Vector2(80, 0)
+	yes_button.pressed.connect(_on_confirmation_yes)
+	buttons.add_child(yes_button)
+
+
+func _on_confirmation_yes() -> void:
+	var action = _confirmation_action
+	_close_confirmation_dialog()
+	
+	if action == "exit":
+		_exit_game()
+	elif action == "reset_data":
+		_reset_user_data()
+
+
+func _on_confirmation_no() -> void:
+	_close_confirmation_dialog()
+
+
+func _close_confirmation_dialog() -> void:
+	_confirmation_dialog_active = false
+	_confirmation_action = ""
+	
+	var overlay = find_child("ConfirmationOverlay", false, false)
+	if overlay:
+		overlay.queue_free()
+	
+	var dialog = find_child("ConfirmationDialog", false, false)
+	if dialog:
+		dialog.queue_free()
+
+
+func _exit_game() -> void:
+	get_tree().quit()
+
+
+func _reset_user_data() -> void:
+	if not FirebaseManager.is_authenticated():
+		_refresh_ui("Not authenticated.")
+		return
+	
+	var delete_ok: bool = await FirebaseManager.delete_user_data()
+	
+	if delete_ok:
+		# Clear local data
+		Data.save_data.clear()
+		File.new_game()
+		
+		# Return to main menu
+		await get_tree().create_timer(0.5).timeout
+		get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
+	else:
+		_refresh_ui("Error deleting data. Please try again.")
