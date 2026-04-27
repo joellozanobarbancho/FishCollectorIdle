@@ -9,7 +9,6 @@ func new_game() -> void:
 		"player": {
 			"id": 1,
 			"name": "default_player",
-			"email": "",
 			"createdAt": Time.get_datetime_string_from_system(),
 			"current_location": "river_bank",
 			"inventory": [],

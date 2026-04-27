@@ -22,6 +22,7 @@ var last_auth_error: String = ""
 var _quitting: bool = false
 var _chat_permission_blocked: bool = false
 var _chat_permission_logged_once: bool = false
+var _remote_save_deleted_this_session: bool = false
 
 
 func _ready() -> void:
@@ -94,6 +95,10 @@ func _authenticate(email: String, password: String, is_signup: bool) -> bool:
 
 	if not response["ok"]:
 		last_auth_error = String(response["message"])
+		if is_signup and last_auth_error == "EMAIL_EXISTS":
+			# If Auth user exists but Firestore save was deleted, recover seamlessly.
+			if await _recover_existing_account_for_signup(email, password):
+				return true
 		auth_failed.emit(last_auth_error)
 		print("Error de auth:", last_auth_error)
 		return false
@@ -102,6 +107,67 @@ func _authenticate(email: String, password: String, is_signup: bool) -> bool:
 	id_token = String(json.get("idToken", ""))
 	local_id = String(json.get("localId", ""))
 	user_email = String(json.get("email", email))
+	_remote_save_deleted_this_session = false
+	_chat_permission_blocked = false
+	_chat_permission_logged_once = false
+
+	if id_token.is_empty() or local_id.is_empty():
+		last_auth_error = "Auth response missing idToken/localId"
+		_clear_auth_session()
+		auth_failed.emit(last_auth_error)
+		return false
+
+	if is_signup:
+		if Data.save_data.is_empty():
+			File.new_game()
+		await upload_save()
+		auth_succeeded.emit(local_id)
+		print("Auth correcta para uid:", local_id)
+	else:
+		var download_ok: bool = await download_save()
+		if not download_ok:
+			last_auth_error = "Account doesn't exist"
+			_clear_auth_session()
+			auth_failed.emit(last_auth_error)
+			return false
+
+		auth_succeeded.emit(local_id)
+		print("Auth correcta para uid:", local_id)
+
+	return true
+
+
+func _clear_auth_session() -> void:
+	id_token = ""
+	local_id = ""
+	user_email = ""
+	_chat_permission_blocked = false
+	_chat_permission_logged_once = false
+
+
+func _recover_existing_account_for_signup(email: String, password: String) -> bool:
+	var sign_in_url := "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=%s" % API_KEY
+	var body := {
+		"email": email,
+		"password": password,
+		"returnSecureToken": true
+	}
+	var sign_in_response: Dictionary = await _request_json(
+		HTTPClient.METHOD_POST,
+		sign_in_url,
+		JSON.stringify(body),
+		PackedStringArray(["Content-Type: application/json"])
+	)
+
+	if not sign_in_response["ok"]:
+		# Keep EMAIL_EXISTS so UI can still suggest login/reset if password differs.
+		return false
+
+	var json: Dictionary = sign_in_response["json"]
+	id_token = String(json.get("idToken", ""))
+	local_id = String(json.get("localId", ""))
+	user_email = String(json.get("email", email))
+	_remote_save_deleted_this_session = false
 	_chat_permission_blocked = false
 	_chat_permission_logged_once = false
 
@@ -111,19 +177,15 @@ func _authenticate(email: String, password: String, is_signup: bool) -> bool:
 		return false
 
 	auth_succeeded.emit(local_id)
-	print("Auth correcta para uid:", local_id)
+	print("Auth recuperada para uid:", local_id)
 
-	if is_signup:
+	var download_ok: bool = await download_save()
+	if not download_ok:
 		if Data.save_data.is_empty():
 			File.new_game()
 		await upload_save()
-	else:
-		var download_ok: bool = await download_save()
-		if not download_ok:
-			last_auth_error = "Account data not found. Try to Register."
-			auth_failed.emit(last_auth_error)
-			return false
 
+	last_auth_error = ""
 	return true
 
 
@@ -135,7 +197,7 @@ func _notification(what: int) -> void:
 
 func _handle_quit_request() -> void:
 	File.save_game()
-	if is_authenticated():
+	if is_authenticated() and not _remote_save_deleted_this_session:
 		await upload_save()
 	get_tree().quit()
 
@@ -386,6 +448,11 @@ func download_save() -> bool:
 
 
 func upload_save() -> void:
+	if _remote_save_deleted_this_session:
+		print("Upload remoto omitido: los datos se borraron en esta sesión")
+		save_uploaded.emit(false)
+		return
+
 	if not is_authenticated():
 		save_uploaded.emit(false)
 		return
@@ -393,12 +460,16 @@ func upload_save() -> void:
 	if Data.save_data.is_empty():
 		File.new_game()
 
+	var save_data_copy: Dictionary = Data.save_data.duplicate(true)
+	if save_data_copy.has("player") and typeof(save_data_copy["player"]) == TYPE_DICTIONARY:
+		save_data_copy["player"].erase("email")
+
 	var payload := {
 		"uid": local_id,
 		"email": user_email,
 		"updated_at_unix": int(Time.get_unix_time_from_system()),
 		"updated_at_iso": Time.get_datetime_string_from_system(),
-		"save_data": Data.save_data
+		"save_data": save_data_copy
 	}
 
 	var response: Dictionary = await _request_json(
@@ -432,6 +503,8 @@ func delete_user_data() -> bool:
 
 	if response["ok"]:
 		print("Datos del usuario borrados de Firestore")
+		_remote_save_deleted_this_session = true
+		_clear_auth_session()
 		return true
 	else:
 		print("Error al borrar datos del usuario:", response["message"])

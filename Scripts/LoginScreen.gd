@@ -12,21 +12,43 @@ const POPUP_DISPLAY_TIME := 2.5
 @onready var error_popup_label: Label = $ErrorPopupLayer/ErrorPopupContainer/ErrorPopupMargin/ErrorPopupLabel
 
 var _popup_revision: int = 0
+var _popup_waiting_for_click: bool = false
+
+signal popup_clicked
 
 
 func _ready() -> void:
 	password_input.secret = true
 
+
+func _input(event: InputEvent) -> void:
+	if not _popup_waiting_for_click or not error_popup_container.visible:
+		return
+
+	var left_click: bool = event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
+	var touch: bool = event is InputEventScreenTouch and event.pressed
+	if left_click or touch:
+		_popup_waiting_for_click = false
+		error_popup_container.visible = false
+		popup_clicked.emit()
+
 func _is_valid_email(email: String) -> bool:
 	return email.contains("@") and email.contains(".")
 
 
-func _show_error_popup(message: String, duration: float = POPUP_DISPLAY_TIME) -> void:
+func _show_error_popup(message: String, duration: float = POPUP_DISPLAY_TIME, wait_for_click: bool = false) -> void:
 	_popup_revision += 1
 	var current_revision: int = _popup_revision
 
 	error_popup_label.text = message
 	error_popup_container.visible = true
+	_popup_waiting_for_click = wait_for_click
+
+	if wait_for_click:
+		await popup_clicked
+		if current_revision == _popup_revision:
+			error_popup_container.visible = false
+		return
 
 	await get_tree().create_timer(duration).timeout
 	if current_revision == _popup_revision:
@@ -38,11 +60,11 @@ func _on_login_button_pressed() -> void:
 	var password := password_input.text
 
 	if email.is_empty() or password.is_empty():
-		_show_error_popup("Email and password are required")
+		await _show_error_popup("Email and password are required", 0.0, true)
 		return
 
 	if not _is_valid_email(email):
-		_show_error_popup("Please enter a valid email")
+		await _show_error_popup("Please enter a valid email", 0.0, true)
 		return
 
 	login_button.disabled = true
@@ -55,18 +77,17 @@ func _on_login_button_pressed() -> void:
 
 	var auth_error: String = FirebaseManager.last_auth_error
 	if auth_error == "EMAIL_NOT_FOUND":
-		_show_error_popup("No account found, opening register...")
+		await _show_error_popup("No account found, opening register...", 0.0, true)
 		await get_tree().create_timer(0.7).timeout
 		get_tree().change_scene_to_file(REGISTER_SCENE_PATH)
 		return
 	
-	if auth_error == "Account data not found. Try to Register.":
-		_show_error_popup("Account was deleted. Please register again...")
-		await get_tree().create_timer(0.7).timeout
-		get_tree().change_scene_to_file(REGISTER_SCENE_PATH)
+	if auth_error == "Account doesn't exist":
+		await _show_error_popup("Account doesn't exist", 0.0, true)
+		login_button.disabled = false
 		return
 
-	_show_error_popup("Login failed: %s" % auth_error)
+	await _show_error_popup("Login failed: %s" % auth_error, 0.0, true)
 	login_button.disabled = false
 
 
@@ -74,11 +95,11 @@ func _on_forgot_password_button_pressed() -> void:
 	var email := email_input.text.strip_edges()
 
 	if email.is_empty():
-		_show_error_popup("Enter your email first")
+		await _show_error_popup("Enter your email first", 0.0, true)
 		return
 
 	if not _is_valid_email(email):
-		_show_error_popup("Please enter a valid email")
+		await _show_error_popup("Please enter a valid email", 0.0, true)
 		return
 
 	_show_error_popup("Sending password reset email...")
@@ -86,7 +107,7 @@ func _on_forgot_password_button_pressed() -> void:
 	if reset_ok:
 		_show_error_popup("Reset email sent. Check your inbox")
 	else:
-		_show_error_popup("Reset failed: %s" % FirebaseManager.last_auth_error)
+		await _show_error_popup("Reset failed: %s" % FirebaseManager.last_auth_error, 0.0, true)
 
 
 func _on_back_to_home_button_pressed() -> void:

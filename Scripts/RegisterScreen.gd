@@ -14,6 +14,9 @@ const POPUP_DISPLAY_TIME := 2.5
 @onready var error_popup_label: Label = $ErrorPopupLayer/ErrorPopupContainer/ErrorPopupMargin/ErrorPopupLabel
 
 var _popup_revision: int = 0
+var _popup_waiting_for_click: bool = false
+
+signal popup_clicked
 
 
 func _ready() -> void:
@@ -21,16 +24,35 @@ func _ready() -> void:
 	confirm_password_input.secret = true
 
 
+func _input(event: InputEvent) -> void:
+	if not _popup_waiting_for_click or not error_popup_container.visible:
+		return
+
+	var left_click: bool = event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
+	var touch: bool = event is InputEventScreenTouch and event.pressed
+	if left_click or touch:
+		_popup_waiting_for_click = false
+		error_popup_container.visible = false
+		popup_clicked.emit()
+
+
 func _is_valid_email(email: String) -> bool:
 	return email.contains("@") and email.contains(".")
 
 
-func _show_error_popup(message: String, duration: float = POPUP_DISPLAY_TIME) -> void:
+func _show_error_popup(message: String, duration: float = POPUP_DISPLAY_TIME, wait_for_click: bool = false) -> void:
 	_popup_revision += 1
 	var current_revision: int = _popup_revision
 
 	error_popup_label.text = message
 	error_popup_container.visible = true
+	_popup_waiting_for_click = wait_for_click
+
+	if wait_for_click:
+		await popup_clicked
+		if current_revision == _popup_revision:
+			error_popup_container.visible = false
+		return
 
 	await get_tree().create_timer(duration).timeout
 	if current_revision == _popup_revision:
@@ -44,15 +66,15 @@ func _on_register_button_pressed() -> void:
 	var confirm_password := confirm_password_input.text
 
 	if email.is_empty() or username.is_empty() or password.is_empty() or confirm_password.is_empty():
-		_show_error_popup("All fields are required")
+		await _show_error_popup("All fields are required", 0.0, true)
 		return
 
 	if not _is_valid_email(email):
-		_show_error_popup("Please enter a valid email")
+		await _show_error_popup("Please enter a valid email", 0.0, true)
 		return
 
 	if password != confirm_password:
-		_show_error_popup("Passwords do not match")
+		await _show_error_popup("Passwords do not match", 0.0, true)
 		return
 
 	register_button.disabled = true
@@ -61,7 +83,6 @@ func _on_register_button_pressed() -> void:
 	if Data.save_data.is_empty():
 		File.new_game()
 	Data.save_data["player"]["name"] = username
-	Data.save_data["player"]["email"] = email
 	File.save_game()
 
 	var register_ok: bool = await FirebaseManager.register(email, password)
@@ -72,12 +93,12 @@ func _on_register_button_pressed() -> void:
 
 	var auth_error: String = FirebaseManager.last_auth_error
 	if auth_error == "EMAIL_EXISTS":
-		_show_error_popup("Account already exists, opening login...")
+		await _show_error_popup("Account already exists, opening login...", 0.0, true)
 		await get_tree().create_timer(0.7).timeout
 		get_tree().change_scene_to_file(LOGIN_SCENE_PATH)
 		return
 
-	_show_error_popup("Register failed: %s" % auth_error)
+	await _show_error_popup("Register failed: %s" % auth_error, 0.0, true)
 	register_button.disabled = false
 
 
@@ -85,4 +106,4 @@ func _on_back_to_home_button_pressed() -> void:
 	if ResourceLoader.exists(HOME_SCENE_PATH):
 		get_tree().change_scene_to_file(HOME_SCENE_PATH)
 		return
-	_show_error_popup("Home screen not created yet")
+	await _show_error_popup("Home screen not created yet", 0.0, true)

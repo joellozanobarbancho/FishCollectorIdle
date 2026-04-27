@@ -5,9 +5,30 @@ func _is_numeric(value: Variant) -> bool:
 	return value_type == TYPE_INT or value_type == TYPE_FLOAT
 
 
+func _get_quest_data_by_id(quest_id: int) -> Dictionary:
+	if DataManager.quests_db.has(quest_id):
+		var by_int: Variant = DataManager.quests_db[quest_id]
+		if typeof(by_int) == TYPE_DICTIONARY:
+			return by_int
+
+	var quest_id_as_float: float = float(quest_id)
+	if DataManager.quests_db.has(quest_id_as_float):
+		var by_float: Variant = DataManager.quests_db[quest_id_as_float]
+		if typeof(by_float) == TYPE_DICTIONARY:
+			return by_float
+
+	var quest_id_as_string: String = str(quest_id)
+	if DataManager.quests_db.has(quest_id_as_string):
+		var by_string: Variant = DataManager.quests_db[quest_id_as_string]
+		if typeof(by_string) == TYPE_DICTIONARY:
+			return by_string
+
+	return {}
+
+
 func claim_quest(quest_id: int) -> bool:
-	var quest = DataManager.quests_db.get(quest_id)
-	if quest == null:
+	var quest: Dictionary = _get_quest_data_by_id(quest_id)
+	if quest.is_empty():
 		return false
 
 	var achievements: Array = Data.save_data["player"].get("achievements", [])
