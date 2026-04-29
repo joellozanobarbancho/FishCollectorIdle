@@ -24,6 +24,9 @@ const QUEST_LOCK_ICON_PATH := "res://Assets/UIElements/lock_icon.svg"
 const POPUP_HALF_WIDTH: float = 200.0
 const POPUP_HALF_HEIGHT_TEXT_ONLY: float = 34.0
 const POPUP_HALF_HEIGHT_WITH_FISH: float = 82.0
+const REWARD_POPUP_HALF_WIDTH: float = 140.0
+const REWARD_POPUP_HEIGHT: float = 88.0
+const REWARD_POPUP_TOP_OFFSET: float = 92.0
 const FISH_OUTLINE_TEXTURES := {
 	"Anchovy": "res://Assets/fish/Salt Water/Anchovy Outline.png",
 	"Clownfish": "res://Assets/fish/Salt Water/Clownfish Outline.png",
@@ -686,7 +689,9 @@ func _show_reward_popup(quest_data: Dictionary) -> void:
 		if reward.has("coins"):
 			reward_text = "%d coins" % int(reward.get("coins", 0))
 
-	reward_popup_label.text = "%s\n%s" % [quest_name, reward_text]
+	var reward_line: String = "REWARD: %s" % (reward_text if reward_text != "" else "--")
+	reward_popup_label.text = "%s\n%s" % [quest_name, reward_line]
+	_set_reward_popup_position()
 	reward_popup_layer.visible = true
 	reward_popup_container.visible = true
 
@@ -1165,6 +1170,17 @@ func _set_popup_half_height(half_height: float) -> void:
 	popup_panel.offset_right = POPUP_HALF_WIDTH
 	popup_panel.offset_top = -half_height
 	popup_panel.offset_bottom = half_height
+
+
+func _set_reward_popup_position() -> void:
+	reward_popup_container.anchor_left = 0.5
+	reward_popup_container.anchor_top = 0.0
+	reward_popup_container.anchor_right = 0.5
+	reward_popup_container.anchor_bottom = 0.0
+	reward_popup_container.offset_left = -REWARD_POPUP_HALF_WIDTH
+	reward_popup_container.offset_right = REWARD_POPUP_HALF_WIDTH
+	reward_popup_container.offset_top = REWARD_POPUP_TOP_OFFSET
+	reward_popup_container.offset_bottom = REWARD_POPUP_TOP_OFFSET + REWARD_POPUP_HEIGHT
 
 
 func _update_coins_label() -> void:

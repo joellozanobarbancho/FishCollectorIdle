@@ -164,23 +164,24 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -180.0
-offset_top = -60.0
-offset_right = 180.0
-offset_bottom = 60.0
+offset_left = -140.0
+offset_top = -44.0
+offset_right = 140.0
+offset_bottom = 44.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_error_bubble")
 
 [node name="ErrorPopupMargin" type="MarginContainer" parent="ErrorPopupLayer/ErrorPopupContainer" unique_id=1525176659]
 layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
 
 [node name="ErrorPopupLabel" type="Label" parent="ErrorPopupLayer/ErrorPopupContainer/ErrorPopupMargin" unique_id=132674017]
-custom_minimum_size = Vector2(300, 50)
+size_flags_horizontal = 3
+size_flags_vertical = 3
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "Error message"

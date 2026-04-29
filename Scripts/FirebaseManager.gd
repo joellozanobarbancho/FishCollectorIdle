@@ -95,10 +95,6 @@ func _authenticate(email: String, password: String, is_signup: bool) -> bool:
 
 	if not response["ok"]:
 		last_auth_error = String(response["message"])
-		if is_signup and last_auth_error == "EMAIL_EXISTS":
-			# If Auth user exists but Firestore save was deleted, recover seamlessly.
-			if await _recover_existing_account_for_signup(email, password):
-				return true
 		auth_failed.emit(last_auth_error)
 		print("Error de auth:", last_auth_error)
 		return false
@@ -143,52 +139,6 @@ func _clear_auth_session() -> void:
 	user_email = ""
 	_chat_permission_blocked = false
 	_chat_permission_logged_once = false
-
-
-func _recover_existing_account_for_signup(email: String, password: String) -> bool:
-	var sign_in_url := "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=%s" % API_KEY
-	var body := {
-		"email": email,
-		"password": password,
-		"returnSecureToken": true
-	}
-	var sign_in_response: Dictionary = await _request_json(
-		HTTPClient.METHOD_POST,
-		sign_in_url,
-		JSON.stringify(body),
-		PackedStringArray(["Content-Type: application/json"])
-	)
-
-	if not sign_in_response["ok"]:
-		# Keep EMAIL_EXISTS so UI can still suggest login/reset if password differs.
-		return false
-
-	var json: Dictionary = sign_in_response["json"]
-	id_token = String(json.get("idToken", ""))
-	local_id = String(json.get("localId", ""))
-	user_email = String(json.get("email", email))
-	_remote_save_deleted_this_session = false
-	_chat_permission_blocked = false
-	_chat_permission_logged_once = false
-
-	if id_token.is_empty() or local_id.is_empty():
-		last_auth_error = "Auth response missing idToken/localId"
-		auth_failed.emit(last_auth_error)
-		return false
-
-	auth_succeeded.emit(local_id)
-	print("Auth recuperada para uid:", local_id)
-
-	var download_ok: bool = await download_save()
-	if not download_ok:
-		if Data.save_data.is_empty():
-			File.new_game()
-		await upload_save()
-
-	last_auth_error = ""
-	return true
-
-
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST and not _quitting:
 		_quitting = true
