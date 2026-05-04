@@ -3,6 +3,18 @@
 [ext_resource type="Script" uid="uid://chjvfs2nwpobi" path="res://Scripts/FishingScreen.gd" id="1_h8x2p"]
 [ext_resource type="Script" uid="uid://cpqwn62gnn633" path="res://Scripts/CooldownOrb.gd" id="6_cooldown_orb"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_message_bubble"]
+bg_color = Color(0.13, 0.2, 0.35, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.92, 0.78, 0.2, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reward_bubble"]
 bg_color = Color(0.13, 0.2, 0.35, 0.95)
 border_width_left = 2
@@ -86,31 +98,33 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -34.0
-offset_right = 200.0
-offset_bottom = 2.0
+offset_left = -140.0
+offset_top = -44.0
+offset_right = 140.0
+offset_bottom = 44.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_message_bubble")
 
 [node name="PopupMargin" type="MarginContainer" parent="MessagePopupLayer/PopupContainer" unique_id=814922147]
 layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 0
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
 
 [node name="PopupContent" type="VBoxContainer" parent="MessagePopupLayer/PopupContainer/PopupMargin" unique_id=1574810659]
 layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="PopupLabel" type="Label" parent="MessagePopupLayer/PopupContainer/PopupMargin/PopupContent" unique_id=1367869368]
-custom_minimum_size = Vector2(300, 0)
+custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
 text = "Click to start fishing!"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 
 [node name="PopupFishSprite" type="TextureRect" parent="MessagePopupLayer/PopupContainer/PopupMargin/PopupContent" unique_id=1073781898]
 visible = false

@@ -97,6 +97,8 @@ func _authenticate(email: String, password: String, is_signup: bool) -> bool:
 		last_auth_error = String(response["message"])
 		auth_failed.emit(last_auth_error)
 		print("Error de auth:", last_auth_error)
+		print("Response completa:", response)
+		print("JSON de error:", response["json"])
 		return false
 
 	var json: Dictionary = response["json"]
@@ -453,13 +455,56 @@ func delete_user_data() -> bool:
 
 	if response["ok"]:
 		print("Datos del usuario borrados de Firestore")
+		await _delete_presence_data()
 		_remote_save_deleted_this_session = true
+		await _delete_auth_account()
 		_clear_auth_session()
 		return true
 	else:
 		print("Error al borrar datos del usuario:", response["message"])
 		if _is_permission_error(response):
 			print(FIRESTORE_RULES_HINT)
+		return false
+
+
+func _delete_presence_data() -> void:
+	if local_id.is_empty():
+		return
+	
+	var response: Dictionary = await _request_json(
+		HTTPClient.METHOD_DELETE,
+		_firestore_collection_document_url(PRESENCE_COLLECTION, local_id),
+		"",
+		_auth_headers()
+	)
+	
+	if response["ok"]:
+		print("Presencia del usuario eliminada")
+	elif int(response["code"]) != 404:
+		print("Error al eliminar presencia:", response["message"])
+
+
+func _delete_auth_account() -> bool:
+	if id_token.is_empty():
+		print("No hay token de autenticación para borrar cuenta")
+		return false
+
+	var url := "https://identitytoolkit.googleapis.com/v1/accounts:delete?key=%s" % API_KEY
+	var body := {
+		"idToken": id_token
+	}
+	var response: Dictionary = await _request_json(
+		HTTPClient.METHOD_POST,
+		url,
+		JSON.stringify(body),
+		PackedStringArray(["Content-Type: application/json"])
+	)
+
+	if response["ok"]:
+		print("Cuenta de Firebase eliminada correctamente")
+		return true
+	else:
+		print("Error al eliminar cuenta de Firebase:", response["message"])
 		return false
 
 
