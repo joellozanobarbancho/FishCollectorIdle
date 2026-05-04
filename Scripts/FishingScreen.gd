@@ -1,5 +1,6 @@
 ﻿extends Control
 
+const SKILL_CHECK_SCENE_PATH: String = "res://Scenes/SkillCheck.tscn"
 const BASE_CATCH_CHANCE: float = 0.85
 const BASE_STAMINA_COST: float = 15.0
 const BASE_REGEN_PER_SECOND: float = 0.1
@@ -82,6 +83,8 @@ var _previous_quest_states: Dictionary = {}
 var _reward_popup_revision: int = 0
 var _confirmation_dialog_active: bool = false
 var _confirmation_action: String = ""
+var _skill_check_active: bool = false
+var _pending_fish_data: Dictionary = {}
 
 
 func _ready() -> void:
@@ -135,6 +138,8 @@ func _process(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible or quest_dropdown.visible or settings_dropdown.visible:
+		return
+	if _skill_check_active:
 		return
 	if not (event is InputEventMouseButton):
 		return
@@ -200,11 +205,19 @@ func _on_fish_button_pressed() -> void:
 		value = int(round(float(value) * 2.0))
 		fish_size = int(round(float(fish_size) * 1.2))
 
-	InventoryManager.add_fish(fish_id, fish_size, value, location_id)
-	_register_fish_catch(fish_data, is_rare)
+	# Almacenar los datos para el skill check
+	_pending_fish_data = {
+		"fish_id": fish_id,
+		"fish_data": fish_data.duplicate(),
+		"fish_name": _fish_name,
+		"fish_size": fish_size,
+		"value": value,
+		"is_rare": is_rare,
+		"location_id": location_id
+	}
 
-	_refresh_ui("You caught a %s!" % _fish_name, fish_id)
-	_update_inventory_display()
+	# Mostrar el skill check
+	_show_skill_check(fish_id, fish_data)
 
 
 
@@ -1498,3 +1511,58 @@ func _reset_user_data() -> void:
 		get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
 	else:
 		_refresh_ui("Error deleting data. Please try again.")
+
+
+func _show_skill_check(fish_id: int, fish_data: Dictionary) -> void:
+	_skill_check_active = true
+	var skill_check_scene: Variant = load(SKILL_CHECK_SCENE_PATH)
+	if skill_check_scene == null:
+		_refresh_ui("Error loading skill check scene.")
+		_skill_check_active = false
+		return
+
+	var skill_check_instance: Node = skill_check_scene.instantiate()
+	if skill_check_instance is not Control:
+		_refresh_ui("Skill check is not a Control node.")
+		_skill_check_active = false
+		skill_check_instance.queue_free()
+		return
+
+	# Configurar el skill check
+	skill_check_instance.set_fish_data(fish_id, fish_data)
+	
+	# Conectar la señal de finalización
+	if skill_check_instance.has_signal("skill_check_completed"):
+		if not skill_check_instance.skill_check_completed.is_connected(Callable(self, "_on_skill_check_completed")):
+			skill_check_instance.skill_check_completed.connect(Callable(self, "_on_skill_check_completed"))
+	
+	# Agregar a la escena
+	add_child(skill_check_instance)
+
+
+func _on_skill_check_completed(success: bool, fish_id: int, fish_data: Dictionary) -> void:
+	_skill_check_active = false
+	
+	if success:
+		# El jugador tuvo éxito en el skill check - capturar el pez
+		if _pending_fish_data.is_empty():
+			return
+		
+		var fish_size: int = _pending_fish_data.get("fish_size", 1)
+		var value: int = _pending_fish_data.get("value", 1)
+		var location_id: String = _pending_fish_data.get("location_id", "river")
+		var fish_name: String = _pending_fish_data.get("fish_name", "Unknown fish")
+		var is_rare: bool = _pending_fish_data.get("is_rare", false)
+		var actual_fish_data: Dictionary = _pending_fish_data.get("fish_data", {})
+		
+		# Capturar el pez
+		InventoryManager.add_fish(fish_id, fish_size, value, location_id)
+		_register_fish_catch(actual_fish_data, is_rare)
+		
+		_refresh_ui("You caught a %s!" % fish_name, fish_id)
+		_update_inventory_display()
+	else:
+		# El jugador falló - no capturar el pez
+		_refresh_ui("The fish got away!")
+	
+	_pending_fish_data.clear()
