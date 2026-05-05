@@ -93,7 +93,7 @@ visible = false
 
 [node name="PopupContainer" type="PanelContainer" parent="MessagePopupLayer" unique_id=1300204056]
 visible = false
-layout_mode = 1
+anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -120,11 +120,11 @@ theme_override_constants/separation = 6
 [node name="PopupLabel" type="Label" parent="MessagePopupLayer/PopupContainer/PopupMargin/PopupContent" unique_id=1367869368]
 custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "Click to start fishing!"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
-theme_override_colors/font_color = Color(1, 1, 1, 1)
 
 [node name="PopupFishSprite" type="TextureRect" parent="MessagePopupLayer/PopupContainer/PopupMargin/PopupContent" unique_id=1073781898]
 visible = false
@@ -180,8 +180,13 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 8
 
-[node name="HeaderLabel" type="Label" parent="StoreDropdown/MarginContainer/VBoxContainer/HeaderPanel/HeaderMargin" unique_id=1999911573]
+[node name="HeaderRow" type="HBoxContainer" parent="StoreDropdown/MarginContainer/VBoxContainer/HeaderPanel/HeaderMargin" unique_id=816698349]
 layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HeaderLabel" type="Label" parent="StoreDropdown/MarginContainer/VBoxContainer/HeaderPanel/HeaderMargin/HeaderRow" unique_id=1999911573]
+layout_mode = 2
+size_flags_horizontal = 3
 text = "STORE"
 
 [node name="StorePanel" type="Panel" parent="StoreDropdown/MarginContainer/VBoxContainer" unique_id=1459090229]
@@ -202,14 +207,20 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="ScrollContainer" type="ScrollContainer" parent="StoreDropdown/MarginContainer/VBoxContainer/StorePanel/StoreMargin" unique_id=985000212]
+[node name="StoreContent" type="VBoxContainer" parent="StoreDropdown/MarginContainer/VBoxContainer/StorePanel/StoreMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="ScrollContainer" type="ScrollContainer" parent="StoreDropdown/MarginContainer/VBoxContainer/StorePanel/StoreMargin/StoreContent" unique_id=985000212]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 2
 
-[node name="ItemList" type="VBoxContainer" parent="StoreDropdown/MarginContainer/VBoxContainer/StorePanel/StoreMargin/ScrollContainer" unique_id=660019956]
+[node name="ItemList" type="VBoxContainer" parent="StoreDropdown/MarginContainer/VBoxContainer/StorePanel/StoreMargin/StoreContent/ScrollContainer" unique_id=660019956]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -359,6 +370,21 @@ layout_mode = 2
 text = "Online now: 0"
 horizontal_alignment = 2
 
+[node name="ButtonRow" type="HBoxContainer" parent="SocialDropdown/MarginContainer/VBoxContainer" unique_id=1294395195]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+alignment = 2
+
+[node name="TradeMarketButton" type="Button" parent="SocialDropdown/MarginContainer/VBoxContainer/ButtonRow"]
+custom_minimum_size = Vector2(112, 0)
+layout_mode = 2
+text = "Trade Market"
+
+[node name="PostOfferButton" type="Button" parent="SocialDropdown/MarginContainer/VBoxContainer/ButtonRow"]
+custom_minimum_size = Vector2(112, 0)
+layout_mode = 2
+text = "Post an offer"
+
 [node name="ChatPanel" type="Panel" parent="SocialDropdown/MarginContainer/VBoxContainer" unique_id=2013224173]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -397,6 +423,88 @@ max_length = 180
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 text = "Send"
+
+[node name="TradeDropdown" type="Control" parent="." unique_id=1930027811]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 84.0
+offset_right = -12.0
+offset_bottom = -48.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="TradeDropdown" unique_id=1930027812]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 12
+
+[node name="VBoxContainer" type="VBoxContainer" parent="TradeDropdown/MarginContainer" unique_id=1930027813]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="HeaderPanel" type="Panel" parent="TradeDropdown/MarginContainer/VBoxContainer" unique_id=1930027814]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+
+[node name="HeaderMargin" type="MarginContainer" parent="TradeDropdown/MarginContainer/VBoxContainer/HeaderPanel" unique_id=1930027815]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="HeaderLabel" type="Label" parent="TradeDropdown/MarginContainer/VBoxContainer/HeaderPanel/HeaderMargin" unique_id=1930027816]
+layout_mode = 2
+text = "TRADE MARKET"
+
+[node name="TradePanel" type="Panel" parent="TradeDropdown/MarginContainer/VBoxContainer" unique_id=1930027817]
+clip_contents = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="TradeMargin" type="MarginContainer" parent="TradeDropdown/MarginContainer/VBoxContainer/TradePanel" unique_id=1930027818]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ScrollContainer" type="ScrollContainer" parent="TradeDropdown/MarginContainer/VBoxContainer/TradePanel/TradeMargin" unique_id=1930027819]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 2
+
+[node name="OfferList" type="VBoxContainer" parent="TradeDropdown/MarginContainer/VBoxContainer/TradePanel/TradeMargin/ScrollContainer" unique_id=1930027820]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
 
 [node name="QuestDropdown" type="Control" parent="." unique_id=1140027811]
 visible = false
@@ -555,28 +663,26 @@ size_flags_vertical = 3
 theme_override_constants/separation = 6
 
 [node name="ExitButton" type="Button" parent="SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList" unique_id=1340027909]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 50)
 text = "Exit Game"
 
 [node name="ResetDataButton" type="Button" parent="SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList" unique_id=1340027910]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 50)
 text = "Reset User Data"
 
-[node name="RewardPopupLayer" type="CanvasLayer" parent="."]
+[node name="RewardPopupLayer" type="CanvasLayer" parent="." unique_id=1175458643]
 layer = 51
 visible = false
 
-[node name="RewardPopupContainer" type="PanelContainer" parent="RewardPopupLayer"]
+[node name="RewardPopupContainer" type="PanelContainer" parent="RewardPopupLayer" unique_id=284126035]
 visible = false
-layout_mode = 1
+anchors_preset = 5
 anchor_left = 0.5
-anchor_top = 0.0
 anchor_right = 0.5
-anchor_bottom = 0.0
 offset_left = -140.0
 offset_top = 92.0
 offset_right = 140.0
@@ -585,24 +691,24 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_reward_bubble")
 
-[node name="RewardPopupMargin" type="MarginContainer" parent="RewardPopupLayer/RewardPopupContainer"]
+[node name="RewardPopupMargin" type="MarginContainer" parent="RewardPopupLayer/RewardPopupContainer" unique_id=201286305]
 layout_mode = 2
 theme_override_constants/margin_left = 6
 theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 6
 theme_override_constants/margin_bottom = 6
 
-[node name="RewardPopupLabel" type="Label" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin"]
+[node name="RewardPopupLabel" type="Label" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin" unique_id=1496858126]
+layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "Quest Name
 REWARD: 500 coins"
-autowrap_mode = 3
-text_overrun_behavior = 3
 horizontal_alignment = 1
 vertical_alignment = 1
+autowrap_mode = 3
+text_overrun_behavior = 3
 
 [node name="BottomNavBar" type="Panel" parent="." unique_id=1269034571]
 layout_mode = 1

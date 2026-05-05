@@ -18,6 +18,8 @@ const STORE_ITEM_PADDING := 8
 const STORE_ITEM_SEPARATION := 4
 const ACHIEVEMENT_ITEM_PADDING := 8
 const ACHIEVEMENT_ITEM_SEPARATION := 4
+const TRADE_ITEM_PADDING := 8
+const TRADE_ITEM_SEPARATION := 4
 const QUEST_PACK1_PATH := "res://Database/quests/quest_pack1.json"
 const QUEST_PACK2_PATH := "res://Database/quests/quest_pack2.json"
 const QUEST_PACK2_UNLOCK_FLAG := "quest_pack2_unlocked"
@@ -40,6 +42,29 @@ const FISH_OUTLINE_TEXTURES := {
 	"Angelfish": "res://Assets/fish/Fresh Water/Angelfish Outline.png",
 	"Rainbow Trout": "res://Assets/fish/Fresh Water/Rainbow Trout Outline.png"
 }
+const TRADE_SAMPLE_OFFERS := [
+	{
+		"player_name": "DeepSeaDave",
+		"offering_count": 3,
+		"offering_fish": "Catfish",
+		"wants_count": 1,
+		"wants_fish": "Pufferfish"
+	},
+	{
+		"player_name": "FishKing",
+		"offering_count": 2,
+		"offering_fish": "Clownfish",
+		"wants_count": 5,
+		"wants_fish": "Anchovy"
+	},
+	{
+		"player_name": "RiverHunter",
+		"offering_count": 1,
+		"offering_fish": "Rainbow Trout",
+		"wants_count": 2,
+		"wants_fish": "Bass"
+	}
+]
 
 @onready var coins_label: Label = $TopHud/CoinsLabel
 @onready var stamina_label: Label = $TopHud/StaminaLabel
@@ -50,7 +75,9 @@ const FISH_OUTLINE_TEXTURES := {
 @onready var popup_label: Label = $MessagePopupLayer/PopupContainer/PopupMargin/PopupContent/PopupLabel
 @onready var popup_fish_sprite: TextureRect = $MessagePopupLayer/PopupContainer/PopupMargin/PopupContent/PopupFishSprite
 @onready var store_dropdown: Control = $StoreDropdown
-@onready var store_item_list: VBoxContainer = $StoreDropdown/MarginContainer/VBoxContainer/StorePanel/StoreMargin/ScrollContainer/ItemList
+@onready var store_item_list: VBoxContainer = $StoreDropdown/MarginContainer/VBoxContainer/StorePanel/StoreMargin/StoreContent/ScrollContainer/ItemList
+@onready var trade_market_button: Button = $SocialDropdown/MarginContainer/VBoxContainer/ButtonRow/TradeMarketButton
+@onready var post_offer_button: Button = $SocialDropdown/MarginContainer/VBoxContainer/ButtonRow/PostOfferButton
 @onready var inventory_dropdown: Control = $InventoryDropdown
 @onready var grid_container: GridContainer = $InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel/InventoryMargin/ScrollContainer/GridContainer
 @onready var social_dropdown: Control = $SocialDropdown
@@ -58,6 +85,8 @@ const FISH_OUTLINE_TEXTURES := {
 @onready var social_chat_log: RichTextLabel = $SocialDropdown/MarginContainer/VBoxContainer/ChatPanel/ChatMargin/ChatLog
 @onready var social_message_input: LineEdit = $SocialDropdown/MarginContainer/VBoxContainer/InputRow/MessageInput
 @onready var social_send_button: Button = $SocialDropdown/MarginContainer/VBoxContainer/InputRow/SendButton
+@onready var trade_dropdown: Control = $TradeDropdown
+@onready var trade_offer_list: VBoxContainer = $TradeDropdown/MarginContainer/VBoxContainer/TradePanel/TradeMargin/ScrollContainer/OfferList
 @onready var quest_dropdown: Control = $QuestDropdown
 @onready var quest_list: VBoxContainer = $QuestDropdown/MarginContainer/VBoxContainer/AchievementsPanel/AchievementsMargin/ScrollContainer/QuestList
 @onready var settings_dropdown: Control = $SettingsDropdown
@@ -96,6 +125,7 @@ func _ready() -> void:
 	store_dropdown.visible = false
 	inventory_dropdown.visible = false
 	social_dropdown.visible = false
+	trade_dropdown.visible = false
 	quest_dropdown.visible = false
 	settings_dropdown.visible = false
 	popup_layer.visible = false
@@ -137,7 +167,7 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible or quest_dropdown.visible or settings_dropdown.visible:
+	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible or trade_dropdown.visible or quest_dropdown.visible or settings_dropdown.visible:
 		return
 	if _skill_check_active:
 		return
@@ -226,7 +256,9 @@ func _on_store_button_pressed() -> void:
 	if store_dropdown.visible:
 		inventory_dropdown.visible = false
 		social_dropdown.visible = false
+		trade_dropdown.visible = false
 		quest_dropdown.visible = false
+		settings_dropdown.visible = false
 		_build_store_items()
 
 
@@ -235,7 +267,9 @@ func _on_inventory_button_pressed() -> void:
 	if inventory_dropdown.visible:
 		store_dropdown.visible = false
 		social_dropdown.visible = false
+		trade_dropdown.visible = false
 		quest_dropdown.visible = false
+		settings_dropdown.visible = false
 	if inventory_dropdown.visible:
 		_update_inventory_display()
 
@@ -246,6 +280,8 @@ func _on_quests_button_pressed() -> void:
 		store_dropdown.visible = false
 		inventory_dropdown.visible = false
 		social_dropdown.visible = false
+		trade_dropdown.visible = false
+		settings_dropdown.visible = false
 		_build_quest_items()
 
 
@@ -254,10 +290,12 @@ func _on_social_button_pressed() -> void:
 	if social_dropdown.visible:
 		store_dropdown.visible = false
 		inventory_dropdown.visible = false
+		trade_dropdown.visible = false
 		quest_dropdown.visible = false
 		settings_dropdown.visible = false
 		_refresh_social_panel(true)
 	else:
+		trade_dropdown.visible = false
 		_chat_poll_timer = CHAT_POLL_INTERVAL_SECONDS
 
 
@@ -267,6 +305,7 @@ func _on_settings_button_pressed() -> void:
 		store_dropdown.visible = false
 		inventory_dropdown.visible = false
 		social_dropdown.visible = false
+		trade_dropdown.visible = false
 		quest_dropdown.visible = false
 
 
@@ -392,6 +431,120 @@ func _connect_social_controls() -> void:
 		social_send_button.pressed.connect(Callable(self, "_on_social_send_button_pressed"))
 	if social_message_input and not social_message_input.text_submitted.is_connected(Callable(self, "_on_social_message_submitted")):
 		social_message_input.text_submitted.connect(Callable(self, "_on_social_message_submitted"))
+	if trade_market_button and not trade_market_button.pressed.is_connected(Callable(self, "_on_trade_market_button_pressed")):
+		trade_market_button.pressed.connect(Callable(self, "_on_trade_market_button_pressed"))
+
+
+func _on_trade_market_button_pressed() -> void:
+	trade_dropdown.visible = not trade_dropdown.visible
+	if trade_dropdown.visible:
+		social_dropdown.visible = false
+		_build_trade_offers()
+
+
+func _build_trade_offers() -> void:
+	for child in trade_offer_list.get_children():
+		child.queue_free()
+
+	for offer_variant in TRADE_SAMPLE_OFFERS:
+		if typeof(offer_variant) != TYPE_DICTIONARY:
+			continue
+		var offer: Dictionary = offer_variant
+		trade_offer_list.add_child(_create_trade_offer_row(offer))
+
+
+func _create_trade_offer_row(offer: Dictionary) -> PanelContainer:
+	var row := PanelContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.custom_minimum_size = Vector2(0, 152)
+
+	var margin := MarginContainer.new()
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.add_theme_constant_override("margin_left", TRADE_ITEM_PADDING)
+	margin.add_theme_constant_override("margin_top", TRADE_ITEM_PADDING)
+	margin.add_theme_constant_override("margin_right", TRADE_ITEM_PADDING)
+	margin.add_theme_constant_override("margin_bottom", TRADE_ITEM_PADDING)
+	row.add_child(margin)
+
+	var content := VBoxContainer.new()
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", TRADE_ITEM_SEPARATION)
+	margin.add_child(content)
+
+	var player_name := Label.new()
+	player_name.text = str(offer.get("player_name", "Player"))
+	player_name.add_theme_color_override("font_color", Color(0.95, 0.82, 0.42, 1.0))
+	content.add_child(player_name)
+
+	var trade_row := HBoxContainer.new()
+	trade_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	trade_row.add_theme_constant_override("separation", 14)
+	content.add_child(trade_row)
+
+	var offering_fish: String = str(offer.get("offering_fish", "Fish"))
+	var wants_fish: String = str(offer.get("wants_fish", "Fish"))
+	var offering_count: int = max(int(offer.get("offering_count", 1)), 1)
+	var wants_count: int = max(int(offer.get("wants_count", 1)), 1)
+
+	var offering_column := VBoxContainer.new()
+	offering_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	offering_column.add_theme_constant_override("separation", 4)
+	trade_row.add_child(offering_column)
+
+	var offering_title := Label.new()
+	offering_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	offering_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	offering_title.add_theme_color_override("font_color", Color(0.95, 0.82, 0.42, 1.0))
+	offering_title.text = "OFFERING"
+	offering_column.add_child(offering_title)
+
+	var offering_label := Label.new()
+	offering_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	offering_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	offering_label.text = "%dx %s" % [offering_count, offering_fish]
+	offering_column.add_child(offering_label)
+
+	var offered_fish_sprite := TextureRect.new()
+	offered_fish_sprite.custom_minimum_size = Vector2(40, 40)
+	offered_fish_sprite.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	offered_fish_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	offered_fish_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	offered_fish_sprite.texture = _get_outline_texture_for_fish_name(offering_fish)
+	offering_column.add_child(offered_fish_sprite)
+
+	var wants_column := VBoxContainer.new()
+	wants_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	wants_column.add_theme_constant_override("separation", 4)
+	trade_row.add_child(wants_column)
+
+	var wants_title := Label.new()
+	wants_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	wants_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	wants_title.add_theme_color_override("font_color", Color(0.95, 0.82, 0.42, 1.0))
+	wants_title.text = "WANTS"
+	wants_column.add_child(wants_title)
+
+	var wants_label := Label.new()
+	wants_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	wants_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	wants_label.text = "%dx %s" % [wants_count, wants_fish]
+	wants_column.add_child(wants_label)
+
+	var wanted_fish_sprite := TextureRect.new()
+	wanted_fish_sprite.custom_minimum_size = Vector2(40, 40)
+	wanted_fish_sprite.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	wanted_fish_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	wanted_fish_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	wanted_fish_sprite.texture = _get_outline_texture_for_fish_name(wants_fish)
+	wants_column.add_child(wanted_fish_sprite)
+
+	var accept_button := Button.new()
+	accept_button.custom_minimum_size = Vector2(120, 34)
+	accept_button.text = "Accept"
+	accept_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	content.add_child(accept_button)
+
+	return row
 
 func _connect_settings_controls() -> void:
 	if exit_button and not exit_button.pressed.is_connected(Callable(self, "_on_exit_button_pressed")):
@@ -1171,6 +1324,16 @@ func _get_outline_texture_for_fish(fish_id: int) -> Texture2D:
 	if not FISH_OUTLINE_TEXTURES.has(fish_name):
 		return null
 
+	var outline_path: String = String(FISH_OUTLINE_TEXTURES[fish_name])
+	var loaded: Variant = load(outline_path)
+	if loaded is Texture2D:
+		return loaded
+	return null
+
+
+func _get_outline_texture_for_fish_name(fish_name: String) -> Texture2D:
+	if fish_name.is_empty() or not FISH_OUTLINE_TEXTURES.has(fish_name):
+		return null
 	var outline_path: String = String(FISH_OUTLINE_TEXTURES[fish_name])
 	var loaded: Variant = load(outline_path)
 	if loaded is Texture2D:
