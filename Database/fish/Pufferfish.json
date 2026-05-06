@@ -4,7 +4,7 @@
 	"rarity": 2,
 	"type": "Salt water",
 	"habitat": "Sea",
-	"description": "",
+	"description": "A curious fish that inflates itself when threatened.",
 	"size": { "min": 10, "max": 25 },
 	"value": { "min": 5, "max": 10 },
 	"eat_stamina": 6,

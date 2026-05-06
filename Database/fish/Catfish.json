@@ -4,7 +4,7 @@
 	"rarity": 2,
 	"type": "Fresh water",
 	"habitat": "River",
-	"description": "",
+	"description": "A bottom-dweller with whiskers, adapted to murky waters.",
 	"size": { "min": 10, "max": 25 },
 	"value": { "min": 5, "max": 10 },
 	"eat_stamina": 6,

@@ -4,7 +4,7 @@
 	"rarity": 3,
 	"type": "Fresh water",
 	"habitat": "River",
-	"description": "",
+	"description": "A freshwater trout with iridescent markings, favours cold streams.",
 	"size": { "min": 10, "max": 25 },
 	"value": { "min": 25, "max": 50 },
 	"eat_stamina": 15,

@@ -4,7 +4,7 @@
 	"rarity": 1,
 	"type": "Salt water",
 	"habitat": "Sea",
-	"description": "",
+	"description": "A bright reef dweller that hides among anemones.",
 	"size": { "min": 10, "max": 25 },
 	"value": { "min": 1, "max": 5 },
 	"xp_on_catch": 1,

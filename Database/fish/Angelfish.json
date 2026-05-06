@@ -4,7 +4,7 @@
 	"rarity": 2,
 	"type": "Fresh water",
 	"habitat": "River",
-	"description": "",
+	"description": "A colorful freshwater species often found near aquatic plants.",
 	"size": { "min": 10, "max": 25 },
 	"value": { "min": 5, "max": 10 },
 	"eat_stamina": 6,

@@ -92,6 +92,9 @@ const TRADE_SAMPLE_OFFERS := [
 @onready var settings_dropdown: Control = $SettingsDropdown
 @onready var exit_button: Button = $SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList/ExitButton
 @onready var reset_data_button: Button = $SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList/ResetDataButton
+@onready var fishpedia_button: Button = $SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList/FishpediaButton
+@onready var fishpedia_dropdown: Control = $FishpediaDropdown
+@onready var fishpedia_list: VBoxContainer = $FishpediaDropdown/MarginContainer/VBoxContainer/FishPanel/FishMargin/ScrollContainer/FishList
 @onready var reward_popup_layer: CanvasLayer = $RewardPopupLayer
 @onready var reward_popup_container: PanelContainer = $RewardPopupLayer/RewardPopupContainer
 @onready var reward_popup_label: Label = $RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardPopupLabel
@@ -128,6 +131,7 @@ func _ready() -> void:
 	trade_dropdown.visible = false
 	quest_dropdown.visible = false
 	settings_dropdown.visible = false
+	fishpedia_dropdown.visible = false
 	popup_layer.visible = false
 	popup_panel.visible = false
 	cooldown_orb.visible = false
@@ -167,7 +171,7 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible or trade_dropdown.visible or quest_dropdown.visible or settings_dropdown.visible:
+	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible or trade_dropdown.visible or quest_dropdown.visible or settings_dropdown.visible or fishpedia_dropdown.visible:
 		return
 	if _skill_check_active:
 		return
@@ -259,6 +263,7 @@ func _on_store_button_pressed() -> void:
 		trade_dropdown.visible = false
 		quest_dropdown.visible = false
 		settings_dropdown.visible = false
+		fishpedia_dropdown.visible = false
 		_build_store_items()
 
 
@@ -270,6 +275,7 @@ func _on_inventory_button_pressed() -> void:
 		trade_dropdown.visible = false
 		quest_dropdown.visible = false
 		settings_dropdown.visible = false
+		fishpedia_dropdown.visible = false
 	if inventory_dropdown.visible:
 		_update_inventory_display()
 
@@ -282,6 +288,7 @@ func _on_quests_button_pressed() -> void:
 		social_dropdown.visible = false
 		trade_dropdown.visible = false
 		settings_dropdown.visible = false
+		fishpedia_dropdown.visible = false
 		_build_quest_items()
 
 
@@ -293,6 +300,7 @@ func _on_social_button_pressed() -> void:
 		trade_dropdown.visible = false
 		quest_dropdown.visible = false
 		settings_dropdown.visible = false
+		fishpedia_dropdown.visible = false
 		_refresh_social_panel(true)
 	else:
 		trade_dropdown.visible = false
@@ -307,6 +315,8 @@ func _on_settings_button_pressed() -> void:
 		social_dropdown.visible = false
 		trade_dropdown.visible = false
 		quest_dropdown.visible = false
+		# Ensure Fishpedia is closed when opening Settings
+		fishpedia_dropdown.visible = false
 
 
 func _build_store_items() -> void:
@@ -551,6 +561,8 @@ func _connect_settings_controls() -> void:
 		exit_button.pressed.connect(Callable(self, "_on_exit_button_pressed"))
 	if reset_data_button and not reset_data_button.pressed.is_connected(Callable(self, "_on_reset_data_button_pressed")):
 		reset_data_button.pressed.connect(Callable(self, "_on_reset_data_button_pressed"))
+	if fishpedia_button and not fishpedia_button.pressed.is_connected(Callable(self, "_on_fishpedia_button_pressed")):
+		fishpedia_button.pressed.connect(Callable(self, "_on_fishpedia_button_pressed"))
 
 func _build_inventory_cards() -> void:
 	for child in grid_container.get_children():
@@ -1341,6 +1353,126 @@ func _get_outline_texture_for_fish_name(fish_name: String) -> Texture2D:
 	return null
 
 
+func _get_total_caught_for_fish(fish_id: int) -> int:
+	var player: Dictionary = Data.save_data.get("player", {})
+	if not player.has("fish_totals") or typeof(player["fish_totals"]) != TYPE_DICTIONARY:
+		return 0
+	var totals: Dictionary = player["fish_totals"]
+	return int(totals.get(str(fish_id), 0))
+
+
+func _get_fishpedia_texture_for_fish(fish_id: int) -> Texture2D:
+	# Use blackened version if never caught, otherwise use outline texture
+	var outline_tex: Texture2D = _get_outline_texture_for_fish(fish_id)
+	var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
+	if fish_data.is_empty():
+		return outline_tex
+	var fish_name: String = String(fish_data.get("name", ""))
+	if _get_total_caught_for_fish(fish_id) <= 0:
+		# build blackened path based on outline mapping
+		if FISH_OUTLINE_TEXTURES.has(fish_name):
+			var outline_path: String = String(FISH_OUTLINE_TEXTURES[fish_name])
+			var last_slash: int = outline_path.rfind("/")
+			if last_slash >= 0:
+				var dir_path := outline_path.substr(0, last_slash + 1)
+				var base := outline_path.substr(last_slash + 1, outline_path.length() - last_slash - 1)
+				var black_base := "Blackened " + base
+				var black_path := dir_path + black_base
+				var loaded_black: Variant = load(black_path)
+				if loaded_black is Texture2D:
+					return loaded_black
+		# fallback to outline
+		return outline_tex
+	# caught at least once -> outline
+	return outline_tex
+
+
+func _on_fishpedia_button_pressed() -> void:
+	fishpedia_dropdown.visible = not fishpedia_dropdown.visible
+	if fishpedia_dropdown.visible:
+		# hide other dropdowns
+		store_dropdown.visible = false
+		inventory_dropdown.visible = false
+		social_dropdown.visible = false
+		trade_dropdown.visible = false
+		quest_dropdown.visible = false
+		settings_dropdown.visible = false
+		_build_fishpedia_items()
+
+
+func _build_fishpedia_items() -> void:
+	# clear existing
+	for child in fishpedia_list.get_children():
+		child.queue_free()
+	# iterate fish db sorted by id
+	var ids: Array = []
+	for k in DataManager.fish_db.keys():
+		ids.append(int(k))
+	ids.sort()
+	for fid in ids:
+		var fish_data: Dictionary = DataManager.get_fish_data_by_id(fid)
+		if fish_data.is_empty():
+			continue
+		var name: String = String(fish_data.get("name", "Fish"))
+		var habitat: String = String(fish_data.get("habitat", ""))
+		var description: String = String(fish_data.get("description", ""))
+		var total_caught: int = _get_total_caught_for_fish(fid)
+		# create row
+		var row := PanelContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.custom_minimum_size = Vector2(0, 86)
+		if total_caught <= 0:
+			row.modulate = Color(0.85, 0.85, 0.85, 1.0)
+		var margin := MarginContainer.new()
+		margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		margin.add_theme_constant_override("margin_left", ACHIEVEMENT_ITEM_PADDING)
+		margin.add_theme_constant_override("margin_top", ACHIEVEMENT_ITEM_PADDING)
+		margin.add_theme_constant_override("margin_right", ACHIEVEMENT_ITEM_PADDING)
+		margin.add_theme_constant_override("margin_bottom", ACHIEVEMENT_ITEM_PADDING)
+		row.add_child(margin)
+
+		var content := HBoxContainer.new()
+		content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		content.add_theme_constant_override("separation", 8)
+		margin.add_child(content)
+
+		var tex := TextureRect.new()
+		tex.custom_minimum_size = Vector2(64, 64)
+		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		var t := _get_fishpedia_texture_for_fish(fid)
+		if t:
+			tex.texture = t
+		content.add_child(tex)
+
+		var vbox := VBoxContainer.new()
+		vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		vbox.add_theme_constant_override("separation", 4)
+		content.add_child(vbox)
+
+		var name_lbl := Label.new()
+		name_lbl.text = name
+		name_lbl.clip_text = true
+		name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		vbox.add_child(name_lbl)
+
+		var total_lbl := Label.new()
+		total_lbl.text = "Total catched: %d" % total_caught
+		vbox.add_child(total_lbl)
+
+		var habitat_lbl := Label.new()
+		habitat_lbl.text = "Habitat: %s" % habitat
+		vbox.add_child(habitat_lbl)
+
+		var desc_lbl := Label.new()
+		desc_lbl.text = description
+		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		vbox.add_child(desc_lbl)
+
+		fishpedia_list.add_child(row)
+
+
 func _set_popup_half_height(half_height: float) -> void:
 	popup_panel.offset_left = -POPUP_HALF_WIDTH
 	popup_panel.offset_right = POPUP_HALF_WIDTH
@@ -1493,6 +1625,18 @@ func _register_fish_catch(fish_data: Dictionary, is_rare: bool) -> void:
 		quest_progress["rare_fish_caught"] = int(quest_progress.get("rare_fish_caught", 0)) + 1
 	if int(fish_data.get("rarity", 0)) >= 3:
 		quest_progress["legendary_fish_caught"] = int(quest_progress.get("legendary_fish_caught", 0)) + 1
+
+	# Track per-fish total captures across the game
+	var player: Dictionary = Data.save_data.get("player", {})
+	if not player.has("fish_totals") or typeof(player["fish_totals"]) != TYPE_DICTIONARY:
+		player["fish_totals"] = {}
+	var totals: Dictionary = player["fish_totals"]
+	var fid_key: String = str(int(fish_data.get("id", -1)))
+	totals[fid_key] = int(totals.get(fid_key, 0)) + 1
+	player["fish_totals"] = totals
+	Data.save_data["player"] = player
+	# Persist the updated totals
+	File.save_game()
 
 
 func _register_unique_fish_sold(fish_id: int) -> void:

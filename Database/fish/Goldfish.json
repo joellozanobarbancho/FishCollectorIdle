@@ -4,7 +4,7 @@
 	"rarity": 1,
 	"type": "Fresh water",
 	"habitat": "River",
-	"description": "",
+	"description": "A common ornamental fish with shimmering scales.",
 	"size": { "min": 10, "max": 25 },
 	"value": { "min": 1, "max": 5 },
 	"eat_stamina": 4,
