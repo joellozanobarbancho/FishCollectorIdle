@@ -30,6 +30,12 @@ const POPUP_HALF_HEIGHT_WITH_FISH: float = 82.0
 const REWARD_POPUP_HALF_WIDTH: float = 140.0
 const REWARD_POPUP_HEIGHT: float = 88.0
 const REWARD_POPUP_TOP_OFFSET: float = 92.0
+const POST_OFFER_POPUP_WIDTH: float = 300.0
+const POST_OFFER_POPUP_HEIGHT: float = 200.0
+const POST_OFFER_POPUP_Z_INDEX: int = 220
+const POST_OFFER_SIDE_IMAGE_SIZE := Vector2(44, 44)
+const POST_OFFER_SIDE_BUTTON_SIZE := Vector2(22, 22)
+const POST_OFFER_AMOUNT_BUTTON_SIZE := Vector2(20, 20)
 const FISH_OUTLINE_TEXTURES := {
 	"Anchovy": "res://Assets/fish/Salt Water/Anchovy Outline.png",
 	"Clownfish": "res://Assets/fish/Salt Water/Clownfish Outline.png",
@@ -126,6 +132,21 @@ var _confirmation_dialog_active: bool = false
 var _confirmation_action: String = ""
 var _skill_check_active: bool = false
 var _pending_fish_data: Dictionary = {}
+var _post_offer_popup_layer: CanvasLayer = null
+var _post_offer_popup_panel: PanelContainer = null
+var _post_offer_offer_side: Dictionary = {}
+var _post_offer_request_side: Dictionary = {}
+var _post_offer_offer_fish_ids: Array[int] = []
+var _post_offer_request_fish_ids: Array[int] = []
+var _post_offer_offer_index: int = 0
+var _post_offer_request_index: int = 0
+var _post_offer_offer_amount: int = 1
+var _post_offer_request_amount: int = 1
+var _post_offer_popup_built: bool = false
+var _post_offer_modal_states: Dictionary = {}
+
+var _habitat_modal_states: Dictionary = {}
+
 
 
 func _ready() -> void:
@@ -145,6 +166,8 @@ func _ready() -> void:
 	habitat_popup_container.visible = false
 	popup_layer.visible = false
 	popup_panel.visible = false
+	# Let global click handling detect taps inside CatchArea.
+	catch_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	cooldown_orb.visible = false
 	cooldown_orb.call("set_progress", 1.0)
 	social_chat_log.add_theme_color_override("default_color", Color(1, 1, 1, 1))
@@ -153,10 +176,12 @@ func _ready() -> void:
 	_refresh_ui("Click to start fishing!")
 	_build_store_items()
 	_build_inventory_cards()
+	_build_post_offer_popup()
 	_connect_social_controls()
 	_connect_settings_controls()
 	_build_habitat_list()
 	habitat_cancel_button.pressed.connect(_on_habitat_cancel_pressed)
+	_update_change_spot_button_visibility()
 
 
 func _process(delta: float) -> void:
@@ -184,7 +209,7 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible or trade_dropdown.visible or quest_dropdown.visible or settings_dropdown.visible or fishpedia_dropdown.visible or habitat_popup_container.visible:
+	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible or trade_dropdown.visible or quest_dropdown.visible or settings_dropdown.visible or fishpedia_dropdown.visible or habitat_popup_container.visible or (is_instance_valid(_post_offer_popup_layer) and _post_offer_popup_layer.visible):
 		return
 	if _skill_check_active:
 		return
@@ -271,7 +296,6 @@ func _on_fish_button_pressed() -> void:
 func _on_store_button_pressed() -> void:
 	store_dropdown.visible = not store_dropdown.visible
 	if store_dropdown.visible:
-		change_spot_button.visible = false
 		inventory_dropdown.visible = false
 		social_dropdown.visible = false
 		trade_dropdown.visible = false
@@ -280,14 +304,12 @@ func _on_store_button_pressed() -> void:
 		fishpedia_dropdown.visible = false
 		habitat_popup_container.visible = false
 		_build_store_items()
-	else:
-		change_spot_button.visible = true
+	_update_change_spot_button_visibility()
 
 
 func _on_inventory_button_pressed() -> void:
 	inventory_dropdown.visible = not inventory_dropdown.visible
 	if inventory_dropdown.visible:
-		change_spot_button.visible = false
 		store_dropdown.visible = false
 		social_dropdown.visible = false
 		trade_dropdown.visible = false
@@ -295,16 +317,14 @@ func _on_inventory_button_pressed() -> void:
 		settings_dropdown.visible = false
 		fishpedia_dropdown.visible = false
 		habitat_popup_container.visible = false
-	else:
-		change_spot_button.visible = true
 	if inventory_dropdown.visible:
 		_update_inventory_display()
+	_update_change_spot_button_visibility()
 
 
 func _on_quests_button_pressed() -> void:
 	quest_dropdown.visible = not quest_dropdown.visible
 	if quest_dropdown.visible:
-		change_spot_button.visible = false
 		store_dropdown.visible = false
 		inventory_dropdown.visible = false
 		social_dropdown.visible = false
@@ -313,14 +333,12 @@ func _on_quests_button_pressed() -> void:
 		fishpedia_dropdown.visible = false
 		habitat_popup_container.visible = false
 		_build_quest_items()
-	else:
-		change_spot_button.visible = true
+	_update_change_spot_button_visibility()
 
 
 func _on_social_button_pressed() -> void:
 	social_dropdown.visible = not social_dropdown.visible
 	if social_dropdown.visible:
-		change_spot_button.visible = false
 		store_dropdown.visible = false
 		inventory_dropdown.visible = false
 		trade_dropdown.visible = false
@@ -331,14 +349,13 @@ func _on_social_button_pressed() -> void:
 		_refresh_social_panel(true)
 	else:
 		trade_dropdown.visible = false
-		change_spot_button.visible = true
 		_chat_poll_timer = CHAT_POLL_INTERVAL_SECONDS
+	_update_change_spot_button_visibility()
 
 
 func _on_settings_button_pressed() -> void:
 	settings_dropdown.visible = not settings_dropdown.visible
 	if settings_dropdown.visible:
-		change_spot_button.visible = false
 		store_dropdown.visible = false
 		inventory_dropdown.visible = false
 		social_dropdown.visible = false
@@ -347,19 +364,18 @@ func _on_settings_button_pressed() -> void:
 		# Ensure Fishpedia is closed when opening Settings
 		fishpedia_dropdown.visible = false
 		habitat_popup_container.visible = false
-	else:
-		change_spot_button.visible = true
+	_update_change_spot_button_visibility()
 
 
 func _on_change_spot_button_pressed() -> void:
 	if habitat_popup_container.visible:
 		habitat_popup_container.visible = false
 		habitat_popup_layer.visible = false
-		change_spot_button.visible = true
+		_set_habitat_modal(false)
 	else:
 		habitat_popup_layer.visible = true
 		habitat_popup_container.visible = true
-		change_spot_button.visible = false
+		_set_habitat_modal(true)
 		store_dropdown.visible = false
 		inventory_dropdown.visible = false
 		social_dropdown.visible = false
@@ -367,12 +383,14 @@ func _on_change_spot_button_pressed() -> void:
 		quest_dropdown.visible = false
 		settings_dropdown.visible = false
 		fishpedia_dropdown.visible = false
+	_update_change_spot_button_visibility()
 
 
 func _on_habitat_cancel_pressed() -> void:
 	habitat_popup_container.visible = false
 	habitat_popup_layer.visible = false
-	change_spot_button.visible = true
+	_set_habitat_modal(false)
+	_update_change_spot_button_visibility()
 
 
 func _build_habitat_list() -> void:
@@ -405,8 +423,9 @@ func _on_habitat_selected(habitat_id: String, habitat_name: String) -> void:
 	File.save_game()
 	habitat_popup_container.visible = false
 	habitat_popup_layer.visible = false
-	change_spot_button.visible = true
+	_set_habitat_modal(false)
 	_build_habitat_list()
+	_update_change_spot_button_visibility()
 
 
 func _build_store_items() -> void:
@@ -533,6 +552,488 @@ func _connect_social_controls() -> void:
 		social_message_input.text_submitted.connect(Callable(self, "_on_social_message_submitted"))
 	if trade_market_button and not trade_market_button.pressed.is_connected(Callable(self, "_on_trade_market_button_pressed")):
 		trade_market_button.pressed.connect(Callable(self, "_on_trade_market_button_pressed"))
+	if post_offer_button and not post_offer_button.pressed.is_connected(Callable(self, "_on_post_offer_button_pressed")):
+		post_offer_button.pressed.connect(Callable(self, "_on_post_offer_button_pressed"))
+
+
+func _build_post_offer_popup() -> void:
+	if _post_offer_popup_built:
+		return
+
+	_post_offer_popup_built = true
+
+	_post_offer_popup_layer = CanvasLayer.new()
+	_post_offer_popup_layer.name = "PostOfferPopupLayer"
+	_post_offer_popup_layer.layer = 53
+	_post_offer_popup_layer.visible = false
+	add_child(_post_offer_popup_layer)
+
+	var backdrop := ColorRect.new()
+	backdrop.name = "Backdrop"
+	backdrop.anchors_preset = Control.PRESET_FULL_RECT
+	backdrop.offset_left = 0.0
+	backdrop.offset_top = 0.0
+	backdrop.offset_right = 0.0
+	backdrop.offset_bottom = 0.0
+	backdrop.color = Color(0, 0, 0, 0.58)
+	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	_post_offer_popup_layer.add_child(backdrop)
+
+	_post_offer_popup_panel = PanelContainer.new()
+	_post_offer_popup_panel.name = "PostOfferPopupPanel"
+	_post_offer_popup_panel.custom_minimum_size = Vector2(POST_OFFER_POPUP_WIDTH, POST_OFFER_POPUP_HEIGHT)
+	_post_offer_popup_panel.anchor_left = 0.5
+	_post_offer_popup_panel.anchor_top = 0.5
+	_post_offer_popup_panel.anchor_right = 0.5
+	_post_offer_popup_panel.anchor_bottom = 0.5
+	_post_offer_popup_panel.offset_left = -POST_OFFER_POPUP_WIDTH * 0.5
+	_post_offer_popup_panel.offset_top = -POST_OFFER_POPUP_HEIGHT * 0.5
+	_post_offer_popup_panel.offset_right = POST_OFFER_POPUP_WIDTH * 0.5
+	_post_offer_popup_panel.offset_bottom = POST_OFFER_POPUP_HEIGHT * 0.5
+	_post_offer_popup_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	_post_offer_popup_panel.z_index = POST_OFFER_POPUP_Z_INDEX + 1
+	var offer_panel_style := StyleBoxFlat.new()
+	offer_panel_style.bg_color = Color(0.13, 0.2, 0.35, 0.95)
+	offer_panel_style.border_width_left = 2
+	offer_panel_style.border_width_top = 2
+	offer_panel_style.border_width_right = 2
+	offer_panel_style.border_width_bottom = 2
+	offer_panel_style.border_color = Color(0.92, 0.78, 0.2, 0.95)
+	offer_panel_style.corner_radius_top_left = 12
+	offer_panel_style.corner_radius_top_right = 12
+	offer_panel_style.corner_radius_bottom_right = 12
+	offer_panel_style.corner_radius_bottom_left = 12
+	_post_offer_popup_panel.add_theme_stylebox_override("panel", offer_panel_style)
+	_post_offer_popup_layer.add_child(_post_offer_popup_panel)
+
+	var panel_margin := MarginContainer.new()
+	panel_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel_margin.add_theme_constant_override("margin_left", 4)
+	panel_margin.add_theme_constant_override("margin_top", 4)
+	panel_margin.add_theme_constant_override("margin_right", 4)
+	panel_margin.add_theme_constant_override("margin_bottom", 4)
+	_post_offer_popup_panel.add_child(panel_margin)
+
+	var content := VBoxContainer.new()
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", 4)
+	panel_margin.add_child(content)
+
+	var header_row := HBoxContainer.new()
+	header_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header_row.add_theme_constant_override("separation", 0)
+	content.add_child(header_row)
+
+	var left_spacer := Control.new()
+	left_spacer.custom_minimum_size = Vector2(22, 0)
+	header_row.add_child(left_spacer)
+
+	var center_box := CenterContainer.new()
+	center_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header_row.add_child(center_box)
+
+	var title_label := Label.new()
+	title_label.text = "POST AN OFFER"
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	title_label.add_theme_font_size_override("font_size", 12)
+	title_label.add_theme_color_override("font_color", Color(0.95, 0.82, 0.42, 1.0))
+	center_box.add_child(title_label)
+
+	var close_button := Button.new()
+	close_button.text = "X"
+	close_button.custom_minimum_size = Vector2(22, 22)
+	close_button.pressed.connect(Callable(self, "_on_post_offer_close_pressed"))
+	header_row.add_child(close_button)
+
+	var selectors_row := HBoxContainer.new()
+	selectors_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	selectors_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	selectors_row.add_theme_constant_override("separation", 4)
+	content.add_child(selectors_row)
+
+	_post_offer_offer_side = _create_post_offer_side_column("Select a fish to offer:", false)
+	selectors_row.add_child(_post_offer_offer_side["root"])
+
+	_post_offer_request_side = _create_post_offer_side_column("Select a fish to request:", true)
+	selectors_row.add_child(_post_offer_request_side["root"])
+
+	var publish_row := HBoxContainer.new()
+	publish_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	publish_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	content.add_child(publish_row)
+
+	var publish_button := Button.new()
+	publish_button.text = "Publish"
+	publish_button.custom_minimum_size = Vector2(96, 24)
+	publish_row.add_child(publish_button)
+
+	_refresh_post_offer_popup()
+
+
+func _create_post_offer_side_column(title_text: String, is_request: bool) -> Dictionary:
+	var column := VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_theme_constant_override("separation", 2)
+
+	var title_label := Label.new()
+	title_label.text = title_text
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_label.add_theme_font_size_override("font_size", 10)
+	column.add_child(title_label)
+
+	var nav_row := HBoxContainer.new()
+	nav_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	nav_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	nav_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	nav_row.add_theme_constant_override("separation", 3)
+	column.add_child(nav_row)
+
+	var prev_button := Button.new()
+	prev_button.text = "<"
+	prev_button.custom_minimum_size = POST_OFFER_SIDE_BUTTON_SIZE
+	prev_button.pressed.connect(Callable(self, "_on_post_offer_cycle_fish").bind(is_request, -1))
+	nav_row.add_child(prev_button)
+
+	var fish_texture := TextureRect.new()
+	fish_texture.custom_minimum_size = POST_OFFER_SIDE_IMAGE_SIZE
+	fish_texture.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	fish_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	fish_texture.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	fish_texture.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	fish_texture.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	nav_row.add_child(fish_texture)
+
+	var next_button := Button.new()
+	next_button.text = ">"
+	next_button.custom_minimum_size = POST_OFFER_SIDE_BUTTON_SIZE
+	next_button.pressed.connect(Callable(self, "_on_post_offer_cycle_fish").bind(is_request, 1))
+	nav_row.add_child(next_button)
+
+	var amount_title := Label.new()
+	amount_title.text = "Select amount:"
+	amount_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	amount_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	amount_title.add_theme_font_size_override("font_size", 10)
+	column.add_child(amount_title)
+
+	var amount_row := HBoxContainer.new()
+	amount_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	amount_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	amount_row.add_theme_constant_override("separation", 2)
+	column.add_child(amount_row)
+
+	var minus_button := Button.new()
+	minus_button.text = "-"
+	minus_button.custom_minimum_size = POST_OFFER_AMOUNT_BUTTON_SIZE
+	minus_button.pressed.connect(Callable(self, "_on_post_offer_change_amount").bind(is_request, -1))
+	amount_row.add_child(minus_button)
+
+	var amount_value_label := Label.new()
+	amount_value_label.text = "1"
+	amount_value_label.custom_minimum_size = Vector2(24, 0)
+	amount_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	amount_value_label.add_theme_font_size_override("font_size", 10)
+	amount_row.add_child(amount_value_label)
+
+	var plus_button := Button.new()
+	plus_button.text = "+"
+	plus_button.custom_minimum_size = POST_OFFER_AMOUNT_BUTTON_SIZE
+	plus_button.pressed.connect(Callable(self, "_on_post_offer_change_amount").bind(is_request, 1))
+	amount_row.add_child(plus_button)
+
+	return {
+		"root": column,
+		"prev_button": prev_button,
+		"next_button": next_button,
+		"fish_texture": fish_texture,
+		"minus_button": minus_button,
+		"plus_button": plus_button,
+		"amount_label": amount_value_label,
+		"title_label": title_label,
+		"is_request": is_request
+	}
+
+
+func _show_post_offer_popup() -> void:
+	_build_post_offer_popup()
+	_refresh_post_offer_selection_lists()
+	_post_offer_offer_amount = max(_post_offer_offer_amount, 1)
+	_post_offer_request_amount = max(_post_offer_request_amount, 1)
+	_update_post_offer_popup_layout()
+	_post_offer_popup_layer.visible = true
+	_set_post_offer_modal(true)
+	social_dropdown.visible = false
+	trade_dropdown.visible = false
+	store_dropdown.visible = false
+	inventory_dropdown.visible = false
+	quest_dropdown.visible = false
+	settings_dropdown.visible = false
+	fishpedia_dropdown.visible = false
+	habitat_popup_container.visible = false
+	_refresh_post_offer_popup()
+	_update_post_offer_popup_layout()
+	_update_change_spot_button_visibility()
+
+
+func _hide_post_offer_popup() -> void:
+	if _post_offer_popup_layer:
+		_post_offer_popup_layer.visible = false
+	_set_post_offer_modal(false)
+	social_dropdown.visible = true
+	_update_change_spot_button_visibility()
+
+
+func _set_post_offer_modal(enable: bool) -> void:
+	# When enabling modal, store mouse_filter and disabled state of interactive controls
+	if enable:
+		_post_offer_modal_states.clear()
+		# Traverse all Controls under this scene (self) and disable those outside the popup layer
+		for node in get_tree().get_nodes_in_group("__all_ui_controls_temp"):
+			pass
+		# Fallback: traverse children recursively
+		var stack: Array = [self]
+		while not stack.is_empty():
+			var n = stack.pop_back()
+			for child in n.get_children():
+				if not (child is Control):
+					stack.push_back(child)
+					continue
+				# skip the popup layer and its descendants
+				if is_instance_valid(_post_offer_popup_layer) and (child == _post_offer_popup_layer or _is_descendant_of(child, _post_offer_popup_layer)):
+					stack.push_back(child)
+					continue
+				# store
+				var path: String = child.get_path()
+				_post_offer_modal_states[path] = {"mouse_filter": child.mouse_filter}
+				if child is Button:
+					_post_offer_modal_states[path]["disabled"] = child.disabled
+					child.disabled = true
+				# block mouse
+				child.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				stack.push_back(child)
+	else:
+		# restore states
+		for path in _post_offer_modal_states.keys():
+			var node = get_node_or_null(path)
+			if node and node is Control:
+				var st = _post_offer_modal_states[path]
+				if st.has("mouse_filter"):
+					node.mouse_filter = int(st["mouse_filter"])
+				if st.has("disabled") and node is Button:
+					node.disabled = bool(st["disabled"])
+		_post_offer_modal_states.clear()
+
+
+func _is_descendant_of(node: Node, ancestor: Node) -> bool:
+	if node == null or ancestor == null:
+		return false
+	var p: Node = node
+	while p != null:
+		if p == ancestor:
+			return true
+		p = p.get_parent()
+	return false
+
+
+func _set_habitat_modal(enable: bool) -> void:
+	# Similar to _set_post_offer_modal but for habitat popup
+	if enable:
+		_habitat_modal_states.clear()
+		var stack: Array = [self]
+		while not stack.is_empty():
+			var n = stack.pop_back()
+			for child in n.get_children():
+				if not (child is Control):
+					stack.push_back(child)
+					continue
+				# skip the habitat popup layer and its descendants
+				if is_instance_valid(habitat_popup_layer) and (child == habitat_popup_layer or _is_descendant_of(child, habitat_popup_layer)):
+					stack.push_back(child)
+					continue
+				var path: String = child.get_path()
+				_habitat_modal_states[path] = {"mouse_filter": child.mouse_filter}
+				if child is Button:
+					_habitat_modal_states[path]["disabled"] = child.disabled
+					child.disabled = true
+				child.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				stack.push_back(child)
+	else:
+		for path in _habitat_modal_states.keys():
+			var node = get_node_or_null(path)
+			if node and node is Control:
+				var st = _habitat_modal_states[path]
+				if st.has("mouse_filter"):
+					node.mouse_filter = int(st["mouse_filter"])
+				if st.has("disabled") and node is Button:
+					node.disabled = bool(st["disabled"])
+		_habitat_modal_states.clear()
+
+
+func _update_change_spot_button_visibility() -> void:
+	var any_dropdown_open: bool = store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible or trade_dropdown.visible or quest_dropdown.visible or settings_dropdown.visible or fishpedia_dropdown.visible or habitat_popup_container.visible or (is_instance_valid(_post_offer_popup_layer) and _post_offer_popup_layer.visible)
+	change_spot_button.visible = not any_dropdown_open
+
+
+func _update_post_offer_popup_layout() -> void:
+	if _post_offer_popup_panel == null:
+		return
+
+	_post_offer_popup_panel.custom_minimum_size = Vector2(POST_OFFER_POPUP_WIDTH, POST_OFFER_POPUP_HEIGHT)
+	_post_offer_popup_panel.offset_left = -POST_OFFER_POPUP_WIDTH * 0.5
+	_post_offer_popup_panel.offset_top = -POST_OFFER_POPUP_HEIGHT * 0.5
+	_post_offer_popup_panel.offset_right = POST_OFFER_POPUP_WIDTH * 0.5
+	_post_offer_popup_panel.offset_bottom = POST_OFFER_POPUP_HEIGHT * 0.5
+
+
+func _refresh_post_offer_selection_lists() -> void:
+	_post_offer_offer_fish_ids = _get_post_offer_inventory_fish_ids()
+	_post_offer_request_fish_ids = _get_post_offer_discovered_fish_ids()
+	if _post_offer_offer_index >= _post_offer_offer_fish_ids.size():
+		_post_offer_offer_index = 0
+	if _post_offer_request_index >= _post_offer_request_fish_ids.size():
+		_post_offer_request_index = 0
+	if _post_offer_offer_index < 0:
+		_post_offer_offer_index = 0
+	if _post_offer_request_index < 0:
+		_post_offer_request_index = 0
+
+
+func _refresh_post_offer_popup() -> void:
+	if _post_offer_offer_side.is_empty() or _post_offer_request_side.is_empty():
+		return
+
+	_refresh_post_offer_selection_lists()
+	var max_offer_amount: int = _get_post_offer_max_offer_amount()
+	_post_offer_offer_amount = min(max(_post_offer_offer_amount, 1), max_offer_amount)
+	_update_post_offer_side(_post_offer_offer_side, _post_offer_offer_fish_ids, _post_offer_offer_index, _post_offer_offer_amount, max_offer_amount)
+	_update_post_offer_side(_post_offer_request_side, _post_offer_request_fish_ids, _post_offer_request_index, _post_offer_request_amount, 9999)
+
+
+func _update_post_offer_side(side: Dictionary, fish_ids: Array[int], selected_index: int, amount: int, max_amount: int) -> void:
+	var fish_texture: TextureRect = side.get("fish_texture")
+	var prev_button: Button = side.get("prev_button")
+	var next_button: Button = side.get("next_button")
+	var minus_button: Button = side.get("minus_button")
+	var plus_button: Button = side.get("plus_button")
+	var amount_label: Label = side.get("amount_label")
+
+	var has_fish: bool = not fish_ids.is_empty()
+	if prev_button:
+		prev_button.disabled = not has_fish
+	if next_button:
+		next_button.disabled = not has_fish
+	if minus_button:
+		minus_button.disabled = not has_fish or amount <= 1
+	if plus_button:
+		plus_button.disabled = not has_fish or amount >= max(max_amount, 1)
+
+	if not has_fish:
+		if fish_texture:
+			fish_texture.texture = null
+			fish_texture.modulate = Color(0.72, 0.72, 0.72, 1.0)
+		if amount_label:
+			amount_label.text = "-"
+		return
+
+	var safe_index: int = max(min(selected_index, fish_ids.size() - 1), 0)
+	var fish_id: int = fish_ids[safe_index]
+	var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
+	var fish_name: String = String(fish_data.get("name", "Fish"))
+	if fish_texture:
+		fish_texture.texture = _get_outline_texture_for_fish(fish_id)
+		fish_texture.modulate = Color(1, 1, 1, 1)
+		fish_texture.tooltip_text = fish_name
+	if amount_label:
+		amount_label.text = str(min(max(amount, 1), max(max_amount, 1)))
+
+
+func _get_post_offer_max_offer_amount() -> int:
+	if _post_offer_offer_fish_ids.is_empty():
+		return 1
+
+	var safe_index: int = max(min(_post_offer_offer_index, _post_offer_offer_fish_ids.size() - 1), 0)
+	var selected_fish_id: int = _post_offer_offer_fish_ids[safe_index]
+	return max(_get_inventory_count_for_fish(selected_fish_id), 1)
+
+
+func _get_inventory_count_for_fish(fish_id: int) -> int:
+	if fish_id < 0:
+		return 0
+
+	var total: int = 0
+	var inventory: Array = InventoryManager.get_inventory()
+	for item in inventory:
+		if _normalized_fish_id(item.get("fish_id", -1)) == fish_id:
+			total += 1
+	return total
+
+
+func _get_post_offer_inventory_fish_ids() -> Array[int]:
+	var inventory: Array = InventoryManager.get_inventory()
+	var seen: Dictionary = {}
+	var fish_ids: Array[int] = []
+	for item in inventory:
+		var fish_id: int = _normalized_fish_id(item.get("fish_id", -1))
+		if fish_id < 0 or seen.has(fish_id):
+			continue
+		seen[fish_id] = true
+		fish_ids.append(fish_id)
+	return fish_ids
+
+
+func _get_post_offer_discovered_fish_ids() -> Array[int]:
+	var fish_ids: Array[int] = []
+	for fish_id_variant in DataManager.fish_db.keys():
+		var fish_id: int = int(fish_id_variant)
+		if _get_total_caught_for_fish(fish_id) > 0:
+			fish_ids.append(fish_id)
+	fish_ids.sort()
+	return fish_ids
+
+
+func _on_post_offer_button_pressed() -> void:
+	_show_post_offer_popup()
+
+
+func _on_post_offer_close_pressed() -> void:
+	_hide_post_offer_popup()
+
+
+func _on_post_offer_cycle_fish(is_request: bool, step: int) -> void:
+	var fish_ids: Array[int] = _post_offer_request_fish_ids if is_request else _post_offer_offer_fish_ids
+	if fish_ids.is_empty():
+		_refresh_post_offer_popup()
+		return
+
+	if is_request:
+		_post_offer_request_index = (_post_offer_request_index + step) % fish_ids.size()
+		if _post_offer_request_index < 0:
+			_post_offer_request_index += fish_ids.size()
+	else:
+		_post_offer_offer_index = (_post_offer_offer_index + step) % fish_ids.size()
+		if _post_offer_offer_index < 0:
+			_post_offer_offer_index += fish_ids.size()
+
+	_refresh_post_offer_popup()
+
+
+func _on_post_offer_change_amount(is_request: bool, step: int) -> void:
+	if is_request:
+		_post_offer_request_amount = max(_post_offer_request_amount + step, 1)
+	else:
+		var max_offer_amount: int = _get_post_offer_max_offer_amount()
+		_post_offer_offer_amount = min(max(_post_offer_offer_amount + step, 1), max_offer_amount)
+	_refresh_post_offer_popup()
+
+
+func _on_post_offer_publish_pressed() -> void:
+	return
 
 
 func _on_trade_market_button_pressed() -> void:
