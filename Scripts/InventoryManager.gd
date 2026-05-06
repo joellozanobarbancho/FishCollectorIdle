@@ -5,7 +5,7 @@ func get_inventory() -> Array:
 
 func add_fish(fish_id: int, size: int, value: int, location_id: String = "") -> void:
 	if location_id == "":
-		location_id = String(Data.save_data["player"].get("current_location", "river_bank"))
+		location_id = String(Data.save_data["player"].get("current_location", "river"))
 
 	var entry = {
 		"fish_id": fish_id,

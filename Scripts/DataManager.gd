@@ -160,8 +160,8 @@ func load_database(path: String) -> Dictionary:
 func get_location(location_id: String) -> Dictionary:
 	if locations_db.has(location_id):
 		return locations_db[location_id]
-	if locations_db.has("river_bank"):
-		return locations_db["river_bank"]
+	if locations_db.has("river"):
+		return locations_db["river"]
 	if locations_db.is_empty():
 		return {}
 	return locations_db[locations_db.keys()[0]]

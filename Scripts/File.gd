@@ -10,7 +10,7 @@ func new_game() -> void:
 			"id": 1,
 			"name": "default_player",
 			"createdAt": Time.get_datetime_string_from_system(),
-			"current_location": "river_bank",
+			"current_location": "river",
 			"inventory": [],
 			"coins": 0,
 			"level": 1,
@@ -56,7 +56,7 @@ func load_game() -> void:
 			if not Data.save_data.has("player"):
 				Data.save_data["player"] = {}
 			if not Data.save_data["player"].has("current_location"):
-				Data.save_data["player"]["current_location"] = "river_bank"
+				Data.save_data["player"]["current_location"] = "river"
 			if not Data.save_data["player"].has("xp"):
 				Data.save_data["player"]["xp"] = 0
 			if not Data.save_data["player"].has("level"):

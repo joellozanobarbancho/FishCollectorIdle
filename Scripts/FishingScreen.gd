@@ -42,6 +42,10 @@ const FISH_OUTLINE_TEXTURES := {
 	"Angelfish": "res://Assets/fish/Fresh Water/Angelfish Outline.png",
 	"Rainbow Trout": "res://Assets/fish/Fresh Water/Rainbow Trout Outline.png"
 }
+const AVAILABLE_HABITATS := [
+	{"id": "river", "name": "River", "habitat": "River"},
+	{"id": "sea", "name": "Sea", "habitat": "Sea"}
+]
 const TRADE_SAMPLE_OFFERS := [
 	{
 		"player_name": "DeepSeaDave",
@@ -95,6 +99,11 @@ const TRADE_SAMPLE_OFFERS := [
 @onready var fishpedia_button: Button = $SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList/FishpediaButton
 @onready var fishpedia_dropdown: Control = $FishpediaDropdown
 @onready var fishpedia_list: VBoxContainer = $FishpediaDropdown/MarginContainer/VBoxContainer/FishPanel/FishMargin/ScrollContainer/FishList
+@onready var change_spot_button: Button = $ChangeSpotButton
+@onready var habitat_popup_layer: CanvasLayer = $HabitatPopupLayer
+@onready var habitat_popup_container: PanelContainer = $HabitatPopupLayer/HabitatPopupContainer
+@onready var habitat_list: VBoxContainer = $HabitatPopupLayer/HabitatPopupContainer/PopupMargin/PopupContent/HabitatList
+@onready var habitat_cancel_button: Button = $HabitatPopupLayer/HabitatPopupContainer/PopupMargin/PopupContent/ButtonContainer/CancelButton
 @onready var reward_popup_layer: CanvasLayer = $RewardPopupLayer
 @onready var reward_popup_container: PanelContainer = $RewardPopupLayer/RewardPopupContainer
 @onready var reward_popup_label: Label = $RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardPopupLabel
@@ -132,6 +141,8 @@ func _ready() -> void:
 	quest_dropdown.visible = false
 	settings_dropdown.visible = false
 	fishpedia_dropdown.visible = false
+	habitat_popup_layer.visible = false
+	habitat_popup_container.visible = false
 	popup_layer.visible = false
 	popup_panel.visible = false
 	cooldown_orb.visible = false
@@ -144,6 +155,8 @@ func _ready() -> void:
 	_build_inventory_cards()
 	_connect_social_controls()
 	_connect_settings_controls()
+	_build_habitat_list()
+	habitat_cancel_button.pressed.connect(_on_habitat_cancel_pressed)
 
 
 func _process(delta: float) -> void:
@@ -171,7 +184,7 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible or trade_dropdown.visible or quest_dropdown.visible or settings_dropdown.visible or fishpedia_dropdown.visible:
+	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible or trade_dropdown.visible or quest_dropdown.visible or settings_dropdown.visible or fishpedia_dropdown.visible or habitat_popup_container.visible:
 		return
 	if _skill_check_active:
 		return
@@ -258,24 +271,32 @@ func _on_fish_button_pressed() -> void:
 func _on_store_button_pressed() -> void:
 	store_dropdown.visible = not store_dropdown.visible
 	if store_dropdown.visible:
+		change_spot_button.visible = false
 		inventory_dropdown.visible = false
 		social_dropdown.visible = false
 		trade_dropdown.visible = false
 		quest_dropdown.visible = false
 		settings_dropdown.visible = false
 		fishpedia_dropdown.visible = false
+		habitat_popup_container.visible = false
 		_build_store_items()
+	else:
+		change_spot_button.visible = true
 
 
 func _on_inventory_button_pressed() -> void:
 	inventory_dropdown.visible = not inventory_dropdown.visible
 	if inventory_dropdown.visible:
+		change_spot_button.visible = false
 		store_dropdown.visible = false
 		social_dropdown.visible = false
 		trade_dropdown.visible = false
 		quest_dropdown.visible = false
 		settings_dropdown.visible = false
 		fishpedia_dropdown.visible = false
+		habitat_popup_container.visible = false
+	else:
+		change_spot_button.visible = true
 	if inventory_dropdown.visible:
 		_update_inventory_display()
 
@@ -283,33 +304,41 @@ func _on_inventory_button_pressed() -> void:
 func _on_quests_button_pressed() -> void:
 	quest_dropdown.visible = not quest_dropdown.visible
 	if quest_dropdown.visible:
+		change_spot_button.visible = false
 		store_dropdown.visible = false
 		inventory_dropdown.visible = false
 		social_dropdown.visible = false
 		trade_dropdown.visible = false
 		settings_dropdown.visible = false
 		fishpedia_dropdown.visible = false
+		habitat_popup_container.visible = false
 		_build_quest_items()
+	else:
+		change_spot_button.visible = true
 
 
 func _on_social_button_pressed() -> void:
 	social_dropdown.visible = not social_dropdown.visible
 	if social_dropdown.visible:
+		change_spot_button.visible = false
 		store_dropdown.visible = false
 		inventory_dropdown.visible = false
 		trade_dropdown.visible = false
 		quest_dropdown.visible = false
 		settings_dropdown.visible = false
 		fishpedia_dropdown.visible = false
+		habitat_popup_container.visible = false
 		_refresh_social_panel(true)
 	else:
 		trade_dropdown.visible = false
+		change_spot_button.visible = true
 		_chat_poll_timer = CHAT_POLL_INTERVAL_SECONDS
 
 
 func _on_settings_button_pressed() -> void:
 	settings_dropdown.visible = not settings_dropdown.visible
 	if settings_dropdown.visible:
+		change_spot_button.visible = false
 		store_dropdown.visible = false
 		inventory_dropdown.visible = false
 		social_dropdown.visible = false
@@ -317,6 +346,67 @@ func _on_settings_button_pressed() -> void:
 		quest_dropdown.visible = false
 		# Ensure Fishpedia is closed when opening Settings
 		fishpedia_dropdown.visible = false
+		habitat_popup_container.visible = false
+	else:
+		change_spot_button.visible = true
+
+
+func _on_change_spot_button_pressed() -> void:
+	if habitat_popup_container.visible:
+		habitat_popup_container.visible = false
+		habitat_popup_layer.visible = false
+		change_spot_button.visible = true
+	else:
+		habitat_popup_layer.visible = true
+		habitat_popup_container.visible = true
+		change_spot_button.visible = false
+		store_dropdown.visible = false
+		inventory_dropdown.visible = false
+		social_dropdown.visible = false
+		trade_dropdown.visible = false
+		quest_dropdown.visible = false
+		settings_dropdown.visible = false
+		fishpedia_dropdown.visible = false
+
+
+func _on_habitat_cancel_pressed() -> void:
+	habitat_popup_container.visible = false
+	habitat_popup_layer.visible = false
+	change_spot_button.visible = true
+
+
+func _build_habitat_list() -> void:
+	for child in habitat_list.get_children():
+		child.queue_free()
+	
+	var current_location: String = String(Data.save_data.get("player", {}).get("current_location", "river"))
+	
+	for habitat_data in AVAILABLE_HABITATS:
+		var habitat_id: String = habitat_data.get("id", "")
+		var habitat_name: String = habitat_data.get("name", "")
+		var is_current: bool = (habitat_id == current_location)
+		
+		var button: Button = Button.new()
+		button.text = habitat_name
+		button.custom_minimum_size = Vector2(0, 50)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		
+		if is_current:
+			button.disabled = true
+			button.modulate = Color(0.5, 0.5, 0.5, 1.0)  # Gray out current habitat
+		else:
+			button.pressed.connect(_on_habitat_selected.bind(habitat_id, habitat_name))
+		
+		habitat_list.add_child(button)
+
+
+func _on_habitat_selected(habitat_id: String, habitat_name: String) -> void:
+	Data.save_data["player"]["current_location"] = habitat_id
+	File.save_game()
+	habitat_popup_container.visible = false
+	habitat_popup_layer.visible = false
+	change_spot_button.visible = true
+	_build_habitat_list()
 
 
 func _build_store_items() -> void:
