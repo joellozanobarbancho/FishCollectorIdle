@@ -37,5 +37,32 @@ service cloud.firestore {
 		&& request.resource.data.last_seen_unix is int;
 	  allow delete: if false;
 	}
+
+	// Trade offers marketplace
+	match /trade_offers/{offerId} {
+	  allow read: if request.auth != null;
+
+	  allow create: if request.auth != null
+		&& request.resource.data.player_uid == request.auth.uid
+		&& request.resource.data.offering_fish is list
+		&& request.resource.data.wanted_fish is list
+		&& request.resource.data.player_name is string
+		&& request.resource.data.player_name.size() > 0
+		&& request.resource.data.status == "active"
+		&& request.resource.data.created_at_unix is int;
+
+	  allow update: if request.auth != null
+		&& request.resource.data.updated_at_unix is int
+		&& (
+			(resource.data.player_uid == request.auth.uid)
+			|| (
+				resource.data.player_uid != request.auth.uid
+				&& resource.data.status == "active"
+				&& request.resource.data.status == "completed"
+			)
+		);
+
+	  allow delete: if false;
+	}
   }
 }

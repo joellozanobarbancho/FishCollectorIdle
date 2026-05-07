@@ -669,6 +669,7 @@ func _build_post_offer_popup() -> void:
 	var publish_button := Button.new()
 	publish_button.text = "Publish"
 	publish_button.custom_minimum_size = Vector2(96, 24)
+	publish_button.pressed.connect(Callable(self, "_on_post_offer_publish_pressed"))
 	publish_row.add_child(publish_button)
 
 	_refresh_post_offer_popup()
@@ -1033,7 +1034,70 @@ func _on_post_offer_change_amount(is_request: bool, step: int) -> void:
 
 
 func _on_post_offer_publish_pressed() -> void:
-	return
+	print("DEBUG: Publish button pressed!")
+	# Validate that we have selected fish to offer and fish to request
+	if _post_offer_offer_fish_ids.is_empty() or _post_offer_request_fish_ids.is_empty():
+		print("DEBUG: Fish IDs empty - offering: %d, request: %d" % [_post_offer_offer_fish_ids.size(), _post_offer_request_fish_ids.size()])
+		_show_error_popup("You must select fish to offer and fish to request.")
+		return
+	
+	if _post_offer_offer_index >= _post_offer_offer_fish_ids.size():
+		print("DEBUG: Invalid offering index %d >= %d" % [_post_offer_offer_index, _post_offer_offer_fish_ids.size()])
+		_show_error_popup("Invalid offering fish selection.")
+		return
+	
+	if _post_offer_request_index >= _post_offer_request_fish_ids.size():
+		print("DEBUG: Invalid request index %d >= %d" % [_post_offer_request_index, _post_offer_request_fish_ids.size()])
+		_show_error_popup("Invalid wanted fish selection.")
+		return
+	
+	# Get the selected fish
+	var offering_fish_id: int = _post_offer_offer_fish_ids[_post_offer_offer_index]
+	var wanted_fish_id: int = _post_offer_request_fish_ids[_post_offer_request_index]
+	print("DEBUG: Selected offering fish ID: %d, wanted fish ID: %d" % [offering_fish_id, wanted_fish_id])
+	print("DEBUG: Offering amount: %d, Request amount: %d" % [_post_offer_offer_amount, _post_offer_request_amount])
+	
+	# Create arrays with the selected quantities
+	var offering_fish: Array = []
+	var wanted_fish: Array = []
+	
+	for i in range(_post_offer_offer_amount):
+		offering_fish.append(offering_fish_id)
+	for i in range(_post_offer_request_amount):
+		wanted_fish.append(wanted_fish_id)
+	
+	# Get player name
+	var player_data: Dictionary = Data.save_data.get("player", {})
+	var player_name: String = String(player_data.get("name", "Anonymous"))
+	print("DEBUG: Publishing offer from player '%s'" % player_name)
+	print("DEBUG: Offering %d fish, Requesting %d fish" % [offering_fish.size(), wanted_fish.size()])
+	
+	# Launch the async publishing without awaiting (it will run in background)
+	_publish_offer_async(offering_fish, wanted_fish, player_name)
+
+
+func _publish_offer_async(offering_fish: Array, wanted_fish: Array, player_name: String) -> void:
+	print("DEBUG: _publish_offer_async called with %d offering and %d wanted fish" % [offering_fish.size(), wanted_fish.size()])
+	var success: bool = await FirebaseManager.post_trade_offer(offering_fish, wanted_fish, player_name)
+	print("DEBUG: Firebase post_trade_offer returned: %s" % ("SUCCESS" if success else "FAILED"))
+	
+	if success:
+		# Remove the fish from inventory
+		for fish_id in offering_fish:
+			var inventory: Array = InventoryManager.get_inventory()
+			for idx in range(inventory.size()):
+				if inventory[idx].get("fish_id", -1) == fish_id:
+					InventoryManager.remove_fish(idx, false)
+					break
+		
+		File.save_game()
+		await FirebaseManager.upload_save()
+		_hide_post_offer_popup()
+		_refresh_ui("Offer posted successfully!")
+		_build_inventory_cards()
+	else:
+		_show_error_popup("Failed to post offer. Please try again.")
+
 
 
 func _on_trade_market_button_pressed() -> void:
@@ -1047,7 +1111,19 @@ func _build_trade_offers() -> void:
 	for child in trade_offer_list.get_children():
 		child.queue_free()
 
-	for offer_variant in TRADE_SAMPLE_OFFERS:
+	# Load offers from Firebase
+	var offers: Array = await FirebaseManager.get_active_trade_offers()
+	
+	if offers.is_empty():
+		var no_offers_label := Label.new()
+		no_offers_label.text = "No active trade offers available."
+		no_offers_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		no_offers_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		no_offers_label.custom_minimum_size = Vector2(0, 60)
+		trade_offer_list.add_child(no_offers_label)
+		return
+	
+	for offer_variant in offers:
 		if typeof(offer_variant) != TYPE_DICTIONARY:
 			continue
 		var offer: Dictionary = offer_variant
@@ -1082,10 +1158,23 @@ func _create_trade_offer_row(offer: Dictionary) -> PanelContainer:
 	trade_row.add_theme_constant_override("separation", 14)
 	content.add_child(trade_row)
 
-	var offering_fish: String = str(offer.get("offering_fish", "Fish"))
-	var wants_fish: String = str(offer.get("wants_fish", "Fish"))
-	var offering_count: int = max(int(offer.get("offering_count", 1)), 1)
-	var wants_count: int = max(int(offer.get("wants_count", 1)), 1)
+	# Extract info from arrays
+	var offering_fish_array: Array = offer.get("offering_fish", [])
+	var wanted_fish_array: Array = offer.get("wanted_fish", [])
+	
+	var offering_fish_name: String = "Fish"
+	var offering_count: int = offering_fish_array.size()
+	if offering_count > 0:
+		var first_offering_id: int = int(offering_fish_array[0])
+		var first_offering_data: Dictionary = DataManager.get_fish_data_by_id(first_offering_id)
+		offering_fish_name = String(first_offering_data.get("name", "Fish"))
+	
+	var wanted_fish_name: String = "Fish"
+	var wanted_count: int = wanted_fish_array.size()
+	if wanted_count > 0:
+		var first_wanted_id: int = int(wanted_fish_array[0])
+		var first_wanted_data: Dictionary = DataManager.get_fish_data_by_id(first_wanted_id)
+		wanted_fish_name = String(first_wanted_data.get("name", "Fish"))
 
 	var offering_column := VBoxContainer.new()
 	offering_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1102,7 +1191,7 @@ func _create_trade_offer_row(offer: Dictionary) -> PanelContainer:
 	var offering_label := Label.new()
 	offering_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	offering_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	offering_label.text = "%dx %s" % [offering_count, offering_fish]
+	offering_label.text = "%dx %s" % [offering_count, offering_fish_name]
 	offering_column.add_child(offering_label)
 
 	var offered_fish_sprite := TextureRect.new()
@@ -1110,7 +1199,7 @@ func _create_trade_offer_row(offer: Dictionary) -> PanelContainer:
 	offered_fish_sprite.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	offered_fish_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	offered_fish_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	offered_fish_sprite.texture = _get_outline_texture_for_fish_name(offering_fish)
+	offered_fish_sprite.texture = _get_outline_texture_for_fish_name(offering_fish_name)
 	offering_column.add_child(offered_fish_sprite)
 
 	var wants_column := VBoxContainer.new()
@@ -1128,7 +1217,7 @@ func _create_trade_offer_row(offer: Dictionary) -> PanelContainer:
 	var wants_label := Label.new()
 	wants_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wants_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	wants_label.text = "%dx %s" % [wants_count, wants_fish]
+	wants_label.text = "%dx %s" % [wanted_count, wanted_fish_name]
 	wants_column.add_child(wants_label)
 
 	var wanted_fish_sprite := TextureRect.new()
@@ -1136,16 +1225,99 @@ func _create_trade_offer_row(offer: Dictionary) -> PanelContainer:
 	wanted_fish_sprite.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	wanted_fish_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	wanted_fish_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	wanted_fish_sprite.texture = _get_outline_texture_for_fish_name(wants_fish)
+	wanted_fish_sprite.texture = _get_outline_texture_for_fish_name(wanted_fish_name)
 	wants_column.add_child(wanted_fish_sprite)
 
 	var accept_button := Button.new()
 	accept_button.custom_minimum_size = Vector2(120, 34)
 	accept_button.text = "Accept"
 	accept_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	if String(offer.get("player_uid", "")) == FirebaseManager.local_id:
+		accept_button.disabled = true
+		accept_button.text = "Your offer"
+	accept_button.pressed.connect(Callable(self, "_on_trade_accept_button_pressed").bind(offer))
 	content.add_child(accept_button)
 
 	return row
+
+
+func _on_trade_accept_button_pressed(offer: Dictionary) -> void:
+	if String(offer.get("player_uid", "")) == FirebaseManager.local_id:
+		_show_error_popup("You cannot accept your own trade offer.")
+		return
+
+	# Get the wanted fish array from the offer
+	var wanted_fish_array: Array = offer.get("wanted_fish", [])
+	if wanted_fish_array.is_empty():
+		_show_error_popup("Invalid offer data.")
+		return
+
+	# Check if player has the required fish
+	var inventory: Array = InventoryManager.get_inventory()
+	var fish_count: Dictionary = {}
+
+	for item in inventory:
+		var fish_id: int = _normalized_fish_id(item.get("fish_id", -1))
+		if fish_id < 0:
+			continue
+		if not fish_count.has(fish_id):
+			fish_count[fish_id] = 0
+		fish_count[fish_id] += 1
+
+	# Check if we have all the required fish
+	var required_count: Dictionary = {}
+	for wanted_fish_id in wanted_fish_array:
+		var fish_id: int = int(wanted_fish_id)
+		if not required_count.has(fish_id):
+			required_count[fish_id] = 0
+		required_count[fish_id] += 1
+
+	# Validate we have the fish
+	for fish_id in required_count.keys():
+		var have_count: int = fish_count.get(fish_id, 0)
+		var need_count: int = required_count[fish_id]
+		if have_count < need_count:
+			var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
+			var fish_name: String = String(fish_data.get("name", "Fish"))
+			_show_error_popup("You need %d more %s." % [need_count - have_count, fish_name])
+			return
+
+	# Mark offer as completed in Firebase
+	var offer_id: String = offer.get("offer_id", "")
+	if offer_id.is_empty():
+		_show_error_popup("Error: Offer ID is missing. Please refresh and try again.")
+		print("ERROR: Offer missing offer_id field:", offer)
+		return
+	
+	var success: bool = await FirebaseManager.accept_trade_offer(offer_id, FirebaseManager.local_id)
+	
+	if success:
+		# Remove the wanted fish from inventory
+		for wanted_fish_id in wanted_fish_array:
+			var fish_id: int = int(wanted_fish_id)
+			var inventory_data: Array = InventoryManager.get_inventory()
+			for idx in range(inventory_data.size()):
+				if inventory_data[idx].get("fish_id", -1) == fish_id:
+					InventoryManager.remove_fish(idx, false)
+					break
+
+		# Add the offering fish to inventory
+		var offering_fish_array: Array = offer.get("offering_fish", [])
+		for offering_fish_id in offering_fish_array:
+			var fish_id: int = int(offering_fish_id)
+			var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
+			var size: int = 10  # Default size
+			var value: int = int(fish_data.get("value", {}).get("min", 10))  # Use a default value
+			InventoryManager.add_fish(fish_id, size, value)
+
+		File.save_game()
+		await FirebaseManager.upload_save()
+		_refresh_ui("Trade completed successfully!")
+		_build_inventory_cards()
+		# Refresh trade offers list
+		_build_trade_offers()
+	else:
+		_show_error_popup("Failed to complete trade. Please try again.")
 
 func _connect_settings_controls() -> void:
 	if exit_button and not exit_button.pressed.is_connected(Callable(self, "_on_exit_button_pressed")):
@@ -1886,6 +2058,10 @@ func _refresh_ui(message: String, caught_fish_id: int = -1) -> void:
 	_update_coins_label()
 	_update_stamina_label()
 	_show_popup_message(message, caught_fish_id)
+
+
+func _show_error_popup(message: String) -> void:
+	_show_popup_message(message, -1)
 
 
 func _refresh_hud_only() -> void:

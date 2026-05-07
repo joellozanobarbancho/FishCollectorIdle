@@ -6,6 +6,7 @@ const FIRESTORE_BASE_URL := "https://firestore.googleapis.com/v1"
 const SAVE_COLLECTION := "user_saves"
 const CHAT_COLLECTION := "global_chat_messages"
 const PRESENCE_COLLECTION := "online_presence"
+const TRADE_OFFERS_COLLECTION := "trade_offers"
 const MAX_CHAT_MESSAGE_LENGTH := 180
 const FIRESTORE_RULES_HINT := "Set Firestore Rules for user_saves/{userId}: allow read, write: if request.auth != null && request.auth.uid == userId;"
 const CHAT_FIRESTORE_RULES_HINT := "Allow authenticated users on global_chat_messages and online_presence collections in Firestore Rules."
@@ -560,3 +561,164 @@ func _request_json(method: int, url: String, body: String = "", headers: PackedS
 		"json": json,
 		"message": error_message
 	}
+
+
+# Trade Market Functions
+func post_trade_offer(offering_fish: Array, wanted_fish: Array, player_name: String) -> bool:
+	"""Post a new trade offer to the market"""
+	print("DEBUG: post_trade_offer called")
+	if not is_authenticated():
+		print("ERROR: No estás autenticado para publicar ofertas. local_id=%s, id_token=%s" % [local_id, "***" if not id_token.is_empty() else "EMPTY"])
+		return false
+	
+	if offering_fish.is_empty() or wanted_fish.is_empty():
+		print("ERROR: La oferta debe tener peces ofrecidos y deseados")
+		return false
+	
+	print("DEBUG: Creating offer with %d offering and %d wanted fish" % [offering_fish.size(), wanted_fish.size()])
+	
+	var unix_time: int = int(Time.get_unix_time_from_system())
+	var document_id: String = "%s_%d_%d" % [local_id, unix_time, randi_range(1000, 9999)]
+	var payload := {
+		"player_uid": local_id,
+		"player_name": player_name,
+		"offering_fish": offering_fish,
+		"wanted_fish": wanted_fish,
+		"created_at_unix": unix_time,
+		"status": "active"
+	}
+	
+	var fields_payload = Utilities.dict2fields(payload)
+	var json_body = JSON.stringify(fields_payload)
+	print("DEBUG: Payload fields: %s" % [fields_payload])
+	print("DEBUG: JSON body being sent: %s" % [json_body])
+	
+	var response: Dictionary = await _request_json(
+		HTTPClient.METHOD_POST,
+		"%s?documentId=%s" % [_firestore_collection_url(TRADE_OFFERS_COLLECTION), document_id],
+		json_body,
+		_auth_headers()
+	)
+	
+	print("DEBUG: Post response OK: %s, Code: %s, Message: %s" % [response["ok"], response["code"], response["message"]])
+	print("DEBUG: Post response JSON: %s" % [response["json"]])
+	
+	if response["ok"]:
+		print("Oferta publicada exitosamente con ID: %s" % document_id)
+		return true
+	else:
+		print("Error al publicar oferta:", response["message"])
+		if _is_permission_error(response):
+			print("Permisos insuficientes. Asegúrate de tener las reglas de Firestore configuradas.")
+		else:
+			print("Tipo de error: HTTP %s" % response["code"])
+			print("Respuesta completa: %s" % response)
+		return false
+
+
+func get_active_trade_offers() -> Array:
+	"""Fetch all active trade offers from the market"""
+	if not is_authenticated():
+		return []
+	
+	print("DEBUG: get_active_trade_offers called, local_id=%s" % local_id)
+	
+	var url: String = "%s?orderBy=created_at_unix%%20desc" % _firestore_collection_url(TRADE_OFFERS_COLLECTION)
+	print("DEBUG: Fetching from URL: %s" % url)
+	
+	var response: Dictionary = await _request_json(
+		HTTPClient.METHOD_GET,
+		url,
+		"",
+		_auth_headers()
+	)
+	
+	print("DEBUG: GET response OK: %s, Code: %s" % [response["ok"], response["code"]])
+	
+	if not response["ok"]:
+		if int(response["code"]) != 404:
+			print("Error al obtener ofertas:", response["message"])
+		return []
+	
+	var json: Dictionary = response["json"]
+	print("DEBUG: Response JSON keys: %s" % [json.keys()])
+	print("DEBUG: Response JSON: %s" % [json])
+	
+	if not json.has("documents") or typeof(json["documents"]) != TYPE_ARRAY:
+		print("DEBUG: No documents array found or not array type")
+		return []
+	
+	print("DEBUG: Found %d documents" % json["documents"].size())
+	
+	var offers: Array = []
+	for doc_variant in json["documents"]:
+		if typeof(doc_variant) != TYPE_DICTIONARY:
+			print("DEBUG: Skipping non-dictionary document")
+			continue
+		var doc: Dictionary = doc_variant
+		print("DEBUG: Processing document with keys: %s" % [doc.keys()])
+		var parsed: Dictionary = Utilities.fields2dict(doc)
+		
+		# Extract the document ID from the full name path
+		if doc.has("name"):
+			var doc_name: String = String(doc["name"])
+			var name_parts: PackedStringArray = doc_name.split("/")
+			if name_parts.size() > 0:
+				var extracted_id: String = name_parts[name_parts.size() - 1]
+				parsed["offer_id"] = extracted_id
+				print("DEBUG: Extracted offer_id: %s" % extracted_id)
+		
+		print("DEBUG: Parsed offer keys: %s, values: %s" % [parsed.keys(), parsed])
+		if parsed.is_empty():
+			print("DEBUG: Skipping empty parsed document")
+			continue
+		# Only include active offers
+		if parsed.get("status", "") == "active":
+			print("DEBUG: Offer has active status; adding offer from player %s" % parsed.get("player_uid", "NONE"))
+			offers.append(parsed)
+		else:
+			print("DEBUG: Skipping offer with status: %s (not active)" % parsed.get("status", "NONE"))
+	
+	print("DEBUG: Returning %d offers total" % offers.size())
+	return offers
+
+
+func accept_trade_offer(offer_id: String, player_uid_accepting: String) -> bool:
+	"""Accept a trade offer and perform the exchange"""
+	if not is_authenticated():
+		print("No estás autenticado para aceptar ofertas")
+		return false
+	
+	print("DEBUG: accept_trade_offer called with offer_id=%s, player=%s" % [offer_id, player_uid_accepting])
+	
+	# Mark the offer as completed
+	var payload := {
+		"status": "completed",
+		"completed_by": player_uid_accepting,
+		"completed_at_unix": int(Time.get_unix_time_from_system()),
+		"updated_at_unix": int(Time.get_unix_time_from_system())
+	}
+	
+	var fields_payload = Utilities.dict2fields(payload)
+	var json_body = JSON.stringify(fields_payload)
+	print("DEBUG: Payload being sent: %s" % [json_body])
+	
+	var response: Dictionary = await _request_json(
+		HTTPClient.METHOD_PATCH,
+		_firestore_collection_document_url(TRADE_OFFERS_COLLECTION, offer_id),
+		json_body,
+		_auth_headers()
+	)
+	
+	print("DEBUG: Accept response OK: %s, Code: %s, Message: %s" % [response["ok"], response["code"], response["message"]])
+	print("DEBUG: Accept response JSON: %s" % [response["json"]])
+	
+	if response["ok"]:
+		print("Oferta marcada como completada: %s" % offer_id)
+		return true
+	else:
+		print("Error al completar oferta:", response["message"])
+		if _is_permission_error(response):
+			print("PERMISSION ERROR - Las reglas de Firestore rechazaron la actualización")
+			print("Full response: %s" % response)
+		return false
