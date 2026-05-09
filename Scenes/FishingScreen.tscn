@@ -36,6 +36,19 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_h8x2p")
 
+[node name="BackgroundLayer" type="CanvasLayer" parent="." unique_id=1459321999]
+layer = -100
+
+[node name="RiverBackground" type="AnimatedSprite2D" parent="BackgroundLayer" unique_id=1459321001]
+position = Vector2(180, 320)
+scale = Vector2(0.9230769, 1.032258)
+visible = false
+
+[node name="SeaBackground" type="AnimatedSprite2D" parent="BackgroundLayer" unique_id=1459321002]
+position = Vector2(180, 320)
+scale = Vector2(0.9230769, 1.032258)
+visible = false
+
 [node name="TopHud" type="VBoxContainer" parent="." unique_id=1928686626]
 layout_mode = 1
 anchors_preset = 5

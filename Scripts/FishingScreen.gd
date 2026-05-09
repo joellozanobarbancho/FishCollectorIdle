@@ -24,6 +24,9 @@ const QUEST_PACK1_PATH := "res://Database/quests/quest_pack1.json"
 const QUEST_PACK2_PATH := "res://Database/quests/quest_pack2.json"
 const QUEST_PACK2_UNLOCK_FLAG := "quest_pack2_unlocked"
 const QUEST_LOCK_ICON_PATH := "res://Assets/UIElements/lock_icon.svg"
+const RIVER_BACKGROUND_FRAMES_DIR := "res://Assets/UIElements/bg_frames/river"
+const SEA_BACKGROUND_FRAMES_DIR := "res://Assets/UIElements/bg_frames/sea"
+const BACKGROUND_FALLBACK_FRAME_DURATION := 0.1
 const POPUP_HALF_WIDTH: float = 200.0
 const POPUP_HALF_HEIGHT_TEXT_ONLY: float = 34.0
 const POPUP_HALF_HEIGHT_WITH_FISH: float = 82.0
@@ -78,6 +81,8 @@ const TRADE_SAMPLE_OFFERS := [
 
 @onready var coins_label: Label = $TopHud/CoinsLabel
 @onready var stamina_label: Label = $TopHud/StaminaLabel
+@onready var river_background: AnimatedSprite2D = $BackgroundLayer/RiverBackground
+@onready var sea_background: AnimatedSprite2D = $BackgroundLayer/SeaBackground
 @onready var cooldown_orb: Control = $CooldownOrb
 @onready var catch_area: Control = $CatchArea
 @onready var popup_layer: CanvasLayer = $MessagePopupLayer
@@ -166,6 +171,8 @@ func _ready() -> void:
 	habitat_popup_container.visible = false
 	popup_layer.visible = false
 	popup_panel.visible = false
+	_setup_background_animations()
+	_update_habitat_background()
 	# Let global click handling detect taps inside CatchArea.
 	catch_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	cooldown_orb.visible = false
@@ -421,11 +428,76 @@ func _build_habitat_list() -> void:
 func _on_habitat_selected(habitat_id: String, habitat_name: String) -> void:
 	Data.save_data["player"]["current_location"] = habitat_id
 	File.save_game()
+	_update_habitat_background()
 	habitat_popup_container.visible = false
 	habitat_popup_layer.visible = false
 	_set_habitat_modal(false)
 	_build_habitat_list()
 	_update_change_spot_button_visibility()
+
+
+func _update_habitat_background() -> void:
+	var current_location: String = String(Data.save_data.get("player", {}).get("current_location", "river"))
+	river_background.visible = (current_location == "river")
+	sea_background.visible = (current_location == "sea")
+	if river_background.visible and river_background.is_inside_tree():
+		river_background.play("default")
+	if sea_background.visible and sea_background.is_inside_tree():
+		sea_background.play("default")
+
+
+func _setup_background_animations() -> void:
+	_configure_background_sprite(river_background, RIVER_BACKGROUND_FRAMES_DIR)
+	_configure_background_sprite(sea_background, SEA_BACKGROUND_FRAMES_DIR)
+
+
+func _configure_background_sprite(sprite: AnimatedSprite2D, frames_dir: String) -> void:
+	var sprite_frames: SpriteFrames = _build_sprite_frames_from_folder(frames_dir)
+	if sprite_frames == null:
+		return
+	sprite.sprite_frames = sprite_frames
+	sprite.animation = "default"
+	sprite.speed_scale = 1.0
+	sprite.play("default")
+
+
+func _build_sprite_frames_from_folder(frames_dir: String) -> SpriteFrames:
+	var frame_paths: Array[String] = []
+	var frame_durations: Array[float] = []
+	var directory: DirAccess = DirAccess.open(frames_dir)
+	if directory == null:
+		return null
+	directory.list_dir_begin()
+	var file_name: String = directory.get_next()
+	while file_name != "":
+		if not directory.current_is_dir() and file_name.to_lower().ends_with(".png"):
+			frame_paths.append(frames_dir.path_join(file_name))
+		file_name = directory.get_next()
+	directory.list_dir_end()
+	frame_paths.sort()
+	if frame_paths.is_empty():
+		return null
+	var durations_path: String = frames_dir.path_join("frame_durations.json")
+	if FileAccess.file_exists(durations_path):
+		var durations_file: FileAccess = FileAccess.open(durations_path, FileAccess.READ)
+		if durations_file != null:
+			var parsed_durations: Variant = JSON.parse_string(durations_file.get_as_text())
+			if typeof(parsed_durations) == TYPE_ARRAY:
+				for duration_variant in parsed_durations:
+					frame_durations.append(max(float(duration_variant), 0.01))
+	var frames: SpriteFrames = SpriteFrames.new()
+	frames.add_animation("default")
+	frames.set_animation_loop("default", true)
+	frames.set_animation_speed("default", 1.0)
+	for frame_index in frame_paths.size():
+		var frame_path: String = frame_paths[frame_index]
+		var frame_texture: Texture2D = load(frame_path)
+		if frame_texture != null:
+			var frame_duration: float = BACKGROUND_FALLBACK_FRAME_DURATION
+			if frame_index < frame_durations.size():
+				frame_duration = frame_durations[frame_index]
+			frames.add_frame("default", frame_texture, frame_duration)
+	return frames
 
 
 func _build_store_items() -> void:
