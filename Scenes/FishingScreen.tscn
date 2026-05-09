@@ -7,6 +7,10 @@
 [ext_resource type="Texture2D" path="res://Assets/UIElements/navbar_icons/quests.png" id="icon_quests"]
 [ext_resource type="Texture2D" path="res://Assets/UIElements/navbar_icons/social.png" id="icon_social"]
 [ext_resource type="Texture2D" path="res://Assets/UIElements/navbar_icons/options.png" id="icon_options"]
+[ext_resource type="Texture2D" path="res://Assets/UIElements/coin.png" id="coin_tex"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stamina_fill"]
+bg_color = Color(0.2, 0.8, 0.2, 1.0)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_message_bubble"]
 bg_color = Color(0.13, 0.2, 0.35, 0.95)
@@ -66,28 +70,41 @@ offset_bottom = 84.0
 grow_horizontal = 2
 theme_override_constants/separation = 6
 
-[node name="CoinsLabel" type="Label" parent="TopHud" unique_id=869932743]
+[node name="CoinsRow" type="HBoxContainer" parent="TopHud"]
+layout_mode = 2
+alignment = 1
+
+[node name="CoinsLabel" type="Label" parent="TopHud/CoinsRow" unique_id=869932743]
 layout_mode = 2
 text = "Coins: 0"
-horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="StaminaLabel" type="Label" parent="TopHud" unique_id=170356233]
+[node name="CoinIcon" type="TextureRect" parent="TopHud/CoinsRow"]
+texture_filter = 1
+custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
-text = "Stamina: 0 / 0"
-horizontal_alignment = 1
+expand_mode = 1
+stretch_mode = 5
+texture = ExtResource("coin_tex")
+
+[node name="StaminaBar" type="ProgressBar" parent="TopHud" unique_id=170356233]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 16)
+max_value = 100.0
+value = 100.0
+show_percentage = false
+theme_override_styles/fill = SubResource("StyleBoxFlat_stamina_fill")
 
 [node name="LevelLabel" type="Label" parent="." unique_id=1234567890]
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -72.0
-offset_top = 8.0
-offset_right = -8.0
-offset_bottom = 24.0
-grow_horizontal = 0
+anchors_preset = 0
+offset_left = 8.0
+offset_top = 16.0
+offset_right = 80.0
+offset_bottom = 34.0
+grow_horizontal = 1
 text = "lv. 1"
-horizontal_alignment = 2
+horizontal_alignment = 0
 
 [node name="CooldownOrb" type="Control" parent="." unique_id=1002025334]
 visible = false
@@ -869,17 +886,41 @@ theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 6
 theme_override_constants/margin_bottom = 6
 
-[node name="RewardPopupLabel" type="Label" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin" unique_id=1496858126]
+[node name="RewardContent" type="VBoxContainer" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+alignment = 1
+theme_override_constants/separation = 4
+
+[node name="RewardPopupLabel" type="Label" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardContent" unique_id=1496858126]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-text = "Quest Name
-REWARD: 500 coins"
+text = "Quest Name"
 horizontal_alignment = 1
-vertical_alignment = 1
 autowrap_mode = 3
 text_overrun_behavior = 3
+
+[node name="RewardRow" type="HBoxContainer" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardContent"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+theme_override_constants/separation = 4
+
+[node name="RewardAmountLabel" type="Label" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardContent/RewardRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "REWARD: 500"
+horizontal_alignment = 1
+
+[node name="RewardCoinIcon" type="TextureRect" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardContent/RewardRow"]
+texture_filter = 1
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+texture = ExtResource("coin_tex")
 
 [node name="ChangeSpotButton" type="Button" parent="." unique_id=3000000002]
 layout_mode = 1

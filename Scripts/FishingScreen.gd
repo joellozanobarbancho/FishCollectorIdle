@@ -79,8 +79,8 @@ const TRADE_SAMPLE_OFFERS := [
 	}
 ]
 
-@onready var coins_label: Label = $TopHud/CoinsLabel
-@onready var stamina_label: Label = $TopHud/StaminaLabel
+@onready var coins_label: Label = $TopHud/CoinsRow/CoinsLabel
+@onready var stamina_bar: ProgressBar = $TopHud/StaminaBar
 @onready var level_label: Label = $LevelLabel
 @onready var river_background: AnimatedSprite2D = $BackgroundLayer/RiverBackground
 @onready var sea_background: AnimatedSprite2D = $BackgroundLayer/SeaBackground
@@ -118,7 +118,8 @@ const TRADE_SAMPLE_OFFERS := [
 @onready var habitat_cancel_button: Button = $HabitatPopupLayer/HabitatPopupContainer/PopupMargin/PopupContent/ButtonContainer/CancelButton
 @onready var reward_popup_layer: CanvasLayer = $RewardPopupLayer
 @onready var reward_popup_container: PanelContainer = $RewardPopupLayer/RewardPopupContainer
-@onready var reward_popup_label: Label = $RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardPopupLabel
+@onready var reward_popup_label: Label = $RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardContent/RewardPopupLabel
+@onready var reward_amount_label: Label = $RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardContent/RewardRow/RewardAmountLabel
 
 var cast_cooldown_remaining: float = 0.0
 var cast_cooldown_total: float = 0.0
@@ -152,6 +153,7 @@ var _post_offer_popup_built: bool = false
 var _post_offer_modal_states: Dictionary = {}
 
 var _habitat_modal_states: Dictionary = {}
+var _stamina_fill_style: StyleBoxFlat
 
 
 
@@ -181,6 +183,8 @@ func _ready() -> void:
 	social_chat_log.add_theme_color_override("default_color", Color(1, 1, 1, 1))
 	reward_popup_layer.visible = false
 	reward_popup_container.visible = false
+	_stamina_fill_style = StyleBoxFlat.new()
+	stamina_bar.add_theme_stylebox_override("fill", _stamina_fill_style)
 	_refresh_ui("Click to start fishing!")
 	_build_store_items()
 	_build_inventory_cards()
@@ -213,7 +217,7 @@ func _process(delta: float) -> void:
 	_update_social_chat_polling(delta)
 
 	_update_coins_label()
-	_update_stamina_label()
+	_update_stamina_bar()
 	_update_level_label()
 
 
@@ -575,12 +579,19 @@ func _create_store_item_row(item_id: String, item_data: Dictionary) -> PanelCont
 		buy_button.pressed.connect(Callable(self, "_on_buy_store_item_pressed").bind(item_id))
 	top_row.add_child(buy_button)
 
+	var cost_row := HBoxContainer.new()
+	cost_row.add_theme_constant_override("separation", 4)
+	content.add_child(cost_row)
+
 	var cost_label := Label.new()
 	if is_maxed:
 		cost_label.text = "Max level reached"
 	else:
 		cost_label.text = "Cost: %d" % max(next_level_cost, 0)
-	content.add_child(cost_label)
+	cost_row.add_child(cost_label)
+
+	if not is_maxed:
+		cost_row.add_child(_make_coin_icon(14))
 
 	var description_label := Label.new()
 	description_label.text = item_description
@@ -1439,10 +1450,12 @@ func _create_quest_row(quest_id: int, quest_data: Dictionary) -> PanelContainer:
 	var description_text: String = str(quest_data.get("description", ""))
 	var reward_variant: Variant = quest_data.get("reward", {})
 	var reward_text: String = "Reward: --"
+	var has_coin_reward: bool = false
 	if typeof(reward_variant) == TYPE_DICTIONARY:
 		var reward: Dictionary = reward_variant
 		if reward.has("coins"):
-			reward_text = "Reward: %d coins" % int(reward.get("coins", 0))
+			reward_text = "Reward: %d" % int(reward.get("coins", 0))
+			has_coin_reward = true
 
 	var row := PanelContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1503,11 +1516,24 @@ func _create_quest_row(quest_id: int, quest_data: Dictionary) -> PanelContainer:
 		bar.value = 0.0
 	content.add_child(bar)
 
+	var status_row := HBoxContainer.new()
+	status_row.add_theme_constant_override("separation", 4)
+	content.add_child(status_row)
+
 	var status_label := Label.new()
-	status_label.text = "%s | %d/%d" % [reward_text, int(progress.get("current", 0)), int(progress.get("target", 1))]
 	if is_locked:
 		status_label.text = "Locked"
-	content.add_child(status_label)
+		status_row.add_child(status_label)
+	else:
+		status_label.text = reward_text
+		status_row.add_child(status_label)
+		if has_coin_reward:
+			status_row.add_child(_make_coin_icon(14))
+		var target_val: int = int(progress.get("target", 1))
+		var current_val: int = min(int(progress.get("current", 0)), target_val)
+		var progress_label := Label.new()
+		progress_label.text = " | %d/%d" % [current_val, target_val]
+		status_row.add_child(progress_label)
 
 	if bool(progress.get("is_claimed", false)):
 		var done_label := Label.new()
@@ -1700,10 +1726,11 @@ func _show_reward_popup(quest_data: Dictionary) -> void:
 	if typeof(reward_variant) == TYPE_DICTIONARY:
 		var reward: Dictionary = reward_variant
 		if reward.has("coins"):
-			reward_text = "%d coins" % int(reward.get("coins", 0))
+			reward_text = "%d" % int(reward.get("coins", 0))
 
 	var reward_line: String = "REWARD: %s" % (reward_text if reward_text != "" else "--")
-	reward_popup_label.text = "%s\n%s" % [quest_name, reward_line]
+	reward_popup_label.text = quest_name
+	reward_amount_label.text = reward_line
 	_set_reward_popup_position()
 	reward_popup_layer.visible = true
 	reward_popup_container.visible = true
@@ -2118,7 +2145,7 @@ func _pull_stamina_from_stats() -> void:
 
 func _refresh_ui(message: String, caught_fish_id: int = -1) -> void:
 	_update_coins_label()
-	_update_stamina_label()
+	_update_stamina_bar()
 	_show_popup_message(message, caught_fish_id)
 
 
@@ -2128,7 +2155,7 @@ func _show_error_popup(message: String) -> void:
 
 func _refresh_hud_only() -> void:
 	_update_coins_label()
-	_update_stamina_label()
+	_update_stamina_bar()
 	_update_level_label()
 
 
@@ -2329,8 +2356,23 @@ func _update_level_label() -> void:
 	level_label.text = "lv. %d" % int(Data.save_data["player"].get("level", 1))
 
 
-func _update_stamina_label() -> void:
-	stamina_label.text = "Stamina: %d / %d" % [int(round(stamina)), int(round(max_stamina))]
+func _update_stamina_bar() -> void:
+	stamina_bar.max_value = max_stamina
+	stamina_bar.value = stamina
+	var ratio: float = stamina / max_stamina if max_stamina > 0.0 else 0.0
+	_stamina_fill_style.bg_color = Color.from_hsv(ratio * 0.33, 0.8, 0.85)
+
+
+func _make_coin_icon(px: int = 16) -> TextureRect:
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = Vector2(px, px)
+	icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var tex: Variant = load("res://Assets/UIElements/coin.png")
+	if tex is Texture2D:
+		icon.texture = tex
+	return icon
 
 
 func _on_sell_button_pressed(card_index: int) -> void:
