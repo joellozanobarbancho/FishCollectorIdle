@@ -8,11 +8,11 @@ const REEL_COOLDOWN_SECONDS: float = 1.0
 const CHAT_POLL_INTERVAL_SECONDS: float = 2.0
 const CHAT_MAX_MESSAGES_RENDERED: int = 30
 const CHAT_MAX_MESSAGE_LENGTH: int = 180
-const INVENTORY_CARD_SIZE := Vector2(112, 154)
-const INVENTORY_CARD_IMAGE_SIZE := Vector2(0, 42)
-const INVENTORY_CARD_PADDING := 3
-const INVENTORY_CARD_SEPARATION := 2
-const INVENTORY_CARD_FONT_SIZE := 8
+const INVENTORY_CARD_SIZE := Vector2(130, 186)
+const INVENTORY_CARD_IMAGE_SIZE := Vector2(0, 64)
+const INVENTORY_CARD_PADDING := 4
+const INVENTORY_CARD_SEPARATION := 3
+const INVENTORY_CARD_FONT_SIZE := 11
 const INVENTORY_GRID_SEPARATION := 6
 const STORE_ITEM_PADDING := 8
 const STORE_ITEM_SEPARATION := 4
@@ -1887,19 +1887,11 @@ func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelC
 
 	var name_label := Label.new()
 	name_label.name = "FishName"
-	name_label.text = fish_name
+	name_label.text = "%s x%d" % [fish_name, count]
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.clip_text = true
 	name_label.add_theme_font_size_override("font_size", INVENTORY_CARD_FONT_SIZE)
 	card_column.add_child(name_label)
-
-	var count_label := Label.new()
-	count_label.name = "CountLabel"
-	count_label.text = "x%d" % count
-	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	count_label.clip_text = true
-	count_label.add_theme_font_size_override("font_size", INVENTORY_CARD_FONT_SIZE)
-	card_column.add_child(count_label)
 
 	var button_row := VBoxContainer.new()
 	button_row.name = "ButtonRow"
@@ -1966,9 +1958,10 @@ func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelC
 	_inv_green_h.corner_radius_bottom_right = 4
 	_inv_green_h.corner_radius_bottom_left = 4
 
-	# Row with EAT button
+	# Row with EAT and EAT ALL buttons
 	var eat_row := HBoxContainer.new()
 	eat_row.name = "EatRow"
+	eat_row.add_theme_constant_override("separation", 4)
 	button_row.add_child(eat_row)
 
 	var eat_button := Button.new()
@@ -1985,10 +1978,25 @@ func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelC
 	eat_button.pressed.connect(Callable(self, "_on_eat_button_pressed").bind(card_index))
 	eat_row.add_child(eat_button)
 
+	var eat_all_button := Button.new()
+	eat_all_button.name = "EatAllButton"
+	eat_all_button.text = "EAT ALL"
+	eat_all_button.clip_text = true
+	eat_all_button.custom_minimum_size = Vector2(44, 28)
+	eat_all_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	eat_all_button.add_theme_font_size_override("font_size", INVENTORY_CARD_FONT_SIZE)
+	eat_all_button.add_theme_stylebox_override("normal", _inv_green.duplicate())
+	eat_all_button.add_theme_stylebox_override("hover", _inv_green_h.duplicate())
+	eat_all_button.add_theme_stylebox_override("pressed", _inv_green_h.duplicate())
+	eat_all_button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+	eat_all_button.pressed.connect(Callable(self, "_on_eat_all_button_pressed").bind(card_index))
+	eat_row.add_child(eat_all_button)
+
 	var disable_actions: bool = count <= 0
 	sell_button.disabled = disable_actions
 	sell_all_button.disabled = disable_actions
 	eat_button.disabled = disable_actions
+	eat_all_button.disabled = disable_actions
 
 	return card
 
@@ -2609,6 +2617,43 @@ func _on_eat_button_pressed(card_index: int) -> void:
 	stamina = min(stamina + stamina_gain, max_stamina)
 	_refresh_hud_only()
 	_update_inventory_display()
+
+
+func _on_eat_all_button_pressed(card_index: int) -> void:
+	if card_index < 0 or card_index >= card_fish_ids.size():
+		return
+	if stamina >= max_stamina:
+		_refresh_ui("Stamina is already full.")
+		return
+
+	var fish_id: int = card_fish_ids[card_index]
+	if fish_id < 0:
+		return
+
+	var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
+	var stamina_gain: float = float(fish_data.get("eat_stamina", 5.0))
+
+	var inventory: Array = InventoryManager.get_inventory()
+	var indices_to_remove: Array = []
+	for i in range(inventory.size()):
+		if _normalized_fish_id(inventory[i].get("fish_id", -1)) == fish_id:
+			indices_to_remove.append(i)
+
+	if indices_to_remove.is_empty():
+		return
+
+	indices_to_remove.sort()
+	indices_to_remove.reverse()
+	for index in indices_to_remove:
+		if stamina >= max_stamina:
+			break
+		stamina = min(stamina + stamina_gain, max_stamina)
+		InventoryManager.remove_fish(index, false)
+
+	File.save_game()
+	_refresh_hud_only()
+	_update_inventory_display()
+
 
 func _update_inventory_display() -> void:
 	_build_inventory_cards()
