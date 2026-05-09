@@ -37,7 +37,7 @@
         "description": "Reach level 5",
         "reward": {
             "flags": {
-                "social_features_enabled": true
+                "quest_pack2_unlocked": true
             }
         }
     },

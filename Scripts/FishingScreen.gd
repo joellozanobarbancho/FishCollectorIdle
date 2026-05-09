@@ -81,6 +81,7 @@ const TRADE_SAMPLE_OFFERS := [
 
 @onready var coins_label: Label = $TopHud/CoinsLabel
 @onready var stamina_label: Label = $TopHud/StaminaLabel
+@onready var level_label: Label = $LevelLabel
 @onready var river_background: AnimatedSprite2D = $BackgroundLayer/RiverBackground
 @onready var sea_background: AnimatedSprite2D = $BackgroundLayer/SeaBackground
 @onready var cooldown_orb: Control = $CooldownOrb
@@ -213,6 +214,7 @@ func _process(delta: float) -> void:
 
 	_update_coins_label()
 	_update_stamina_label()
+	_update_level_label()
 
 
 func _input(event: InputEvent) -> void:
@@ -1486,8 +1488,6 @@ func _create_quest_row(quest_id: int, quest_data: Dictionary) -> PanelContainer:
 
 	var description_label := Label.new()
 	description_label.text = description_text
-	if is_locked:
-		description_label.text = "Unlock this quest by completing all quests in Pack 1."
 	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(description_label)
 
@@ -1506,7 +1506,7 @@ func _create_quest_row(quest_id: int, quest_data: Dictionary) -> PanelContainer:
 	var status_label := Label.new()
 	status_label.text = "%s | %d/%d" % [reward_text, int(progress.get("current", 0)), int(progress.get("target", 1))]
 	if is_locked:
-		status_label.text = "Locked | Complete all Pack 1 quests"
+		status_label.text = "Locked"
 	content.add_child(status_label)
 
 	if bool(progress.get("is_claimed", false)):
@@ -1735,20 +1735,10 @@ func _get_quest_data_by_id(quest_id: int) -> Dictionary:
 	return {}
 
 
+const QUEST_PACK2_UNLOCK_QUEST_ID := 15
+
 func _quest_unlocks_pack2(quest_data: Dictionary) -> bool:
-	if not quest_data.has("reward"):
-		return false
-	var reward_variant: Variant = quest_data.get("reward", {})
-	if typeof(reward_variant) != TYPE_DICTIONARY:
-		return false
-	var reward: Dictionary = reward_variant
-	if not reward.has("flags"):
-		return false
-	var flags_variant: Variant = reward.get("flags", {})
-	if typeof(flags_variant) != TYPE_DICTIONARY:
-		return false
-	var flags: Dictionary = flags_variant
-	return bool(flags.get(QUEST_PACK2_UNLOCK_FLAG, false))
+	return int(quest_data.get("id", -1)) == QUEST_PACK2_UNLOCK_QUEST_ID
 
 
 func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelContainer:
@@ -2139,6 +2129,7 @@ func _show_error_popup(message: String) -> void:
 func _refresh_hud_only() -> void:
 	_update_coins_label()
 	_update_stamina_label()
+	_update_level_label()
 
 
 func _show_popup_message(message: String, caught_fish_id: int = -1) -> void:
@@ -2332,6 +2323,10 @@ func _set_reward_popup_position() -> void:
 
 func _update_coins_label() -> void:
 	coins_label.text = "Coins: %d" % int(Data.save_data["player"].get("coins", 0))
+
+
+func _update_level_label() -> void:
+	level_label.text = "lv. %d" % int(Data.save_data["player"].get("level", 1))
 
 
 func _update_stamina_label() -> void:
