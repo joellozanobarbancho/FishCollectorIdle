@@ -710,6 +710,16 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 6
 
+[node name="FishpediaButton" type="Button" parent="SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList" unique_id=1340027911]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Fishpedia"
+
+[node name="Spacer" type="Control" parent="SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList"]
+layout_mode = 2
+size_flags_vertical = 3
+
 [node name="ExitButton" type="Button" parent="SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList" unique_id=1340027909]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
@@ -856,12 +866,6 @@ custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 text = "Cancel"
 
-[node name="FishpediaButton" type="Button" parent="SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList" unique_id=1340027911]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Fishpedia"
-
 [node name="RewardPopupLayer" type="CanvasLayer" parent="." unique_id=1175458643]
 layer = 51
 visible = false
@@ -930,14 +934,14 @@ anchor_top = 1.0
 anchor_right = 0.0
 anchor_bottom = 1.0
 offset_left = 8.0
-offset_top = -72.0
-offset_right = 148.0
+offset_top = -100.0
+offset_right = 100.0
 offset_bottom = -52.0
 grow_horizontal = 1
 grow_vertical = 0
-custom_minimum_size = Vector2(140, 20)
+custom_minimum_size = Vector2(92, 48)
 theme_override_font_sizes/font_size = 12
-text = "Change habitat"
+text = "Change\nHabitat"
 
 [node name="BottomNavBar" type="Panel" parent="." unique_id=1269034571]
 layout_mode = 1

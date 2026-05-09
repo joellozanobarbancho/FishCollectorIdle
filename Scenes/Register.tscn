@@ -59,6 +59,20 @@ corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_blue_btn"]
+bg_color = Color(0.25, 0.6, 0.9, 1.0)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_blue_btn_hover"]
+bg_color = Color(0.3, 0.7, 1.0, 1.0)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
 [node name="Register" type="Control" unique_id=302787339]
 layout_mode = 3
 anchors_preset = 15
@@ -79,6 +93,19 @@ mouse_filter = 2
 texture = ExtResource("1_g6fiq")
 expand_mode = 1
 stretch_mode = 5
+
+[node name="BackToHomeButton" type="Button" parent="." unique_id=800077034]
+z_index = 10
+layout_mode = 1
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 96.0
+offset_bottom = 44.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_blue_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_blue_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_blue_btn_hover")
+text = "Back"
 
 [node name="ErrorPopupLayer" type="CanvasLayer" parent="." unique_id=1402998700]
 
@@ -122,6 +149,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
 [node name="AuthCard" type="PanelContainer" parent="CenterContainer" unique_id=2129675153]
 custom_minimum_size = Vector2(191, 0)
@@ -178,14 +206,21 @@ placeholder_text = "Confirm password"
 secret = true
 
 [node name="RegisterButton" type="Button" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=1620380820]
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_blue_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_blue_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_blue_btn_hover")
 text = "Create Account"
 
 [node name="BackButton" type="Button" parent="CenterContainer/AuthCard/MarginContainer/VBoxContainer" unique_id=197021751]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Back"
 
-[connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/BackButton" to="." method="_on_back_to_home_button_pressed"]
+[connection signal="pressed" from="BackToHomeButton" to="." method="_on_back_to_home_button_pressed"]
 [connection signal="pressed" from="CenterContainer/AuthCard/MarginContainer/VBoxContainer/RegisterButton" to="." method="_on_register_button_pressed"]

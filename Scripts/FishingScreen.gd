@@ -194,6 +194,50 @@ func _ready() -> void:
 	_build_habitat_list()
 	habitat_cancel_button.pressed.connect(_on_habitat_cancel_pressed)
 	_update_change_spot_button_visibility()
+	_apply_button_styles()
+
+
+func _apply_button_styles() -> void:
+	var blue := StyleBoxFlat.new()
+	blue.bg_color = Color(0.25, 0.6, 0.9, 1.0)
+	blue.corner_radius_top_left = 6
+	blue.corner_radius_top_right = 6
+	blue.corner_radius_bottom_right = 6
+	blue.corner_radius_bottom_left = 6
+	var blue_hover := StyleBoxFlat.new()
+	blue_hover.bg_color = Color(0.3, 0.7, 1.0, 1.0)
+	blue_hover.corner_radius_top_left = 6
+	blue_hover.corner_radius_top_right = 6
+	blue_hover.corner_radius_bottom_right = 6
+	blue_hover.corner_radius_bottom_left = 6
+	var red := StyleBoxFlat.new()
+	red.bg_color = Color(0.8, 0.15, 0.15, 1.0)
+	red.corner_radius_top_left = 6
+	red.corner_radius_top_right = 6
+	red.corner_radius_bottom_right = 6
+	red.corner_radius_bottom_left = 6
+	var red_hover := StyleBoxFlat.new()
+	red_hover.bg_color = Color(0.9, 0.25, 0.25, 1.0)
+	red_hover.corner_radius_top_left = 6
+	red_hover.corner_radius_top_right = 6
+	red_hover.corner_radius_bottom_right = 6
+	red_hover.corner_radius_bottom_left = 6
+	var navbar := $BottomNavBar
+	var _skip_names: Array = ["BuyButton", "SellButton", "SellAllButton", "EatButton"]
+	for node in find_children("*", "Button", true, false):
+		var btn := node as Button
+		if btn == null:
+			continue
+		if btn == change_spot_button or navbar.is_ancestor_of(btn) or btn.name in _skip_names:
+			continue
+		if btn == reset_data_button:
+			btn.add_theme_stylebox_override("normal", red)
+			btn.add_theme_stylebox_override("hover", red_hover)
+			btn.add_theme_stylebox_override("pressed", red_hover.duplicate())
+		else:
+			btn.add_theme_stylebox_override("normal", blue.duplicate())
+			btn.add_theme_stylebox_override("hover", blue_hover.duplicate())
+			btn.add_theme_stylebox_override("pressed", blue_hover.duplicate())
 
 
 func _process(delta: float) -> void:
@@ -569,6 +613,7 @@ func _create_store_item_row(item_id: String, item_data: Dictionary) -> PanelCont
 	top_row.add_child(title_label)
 
 	var buy_button := Button.new()
+	buy_button.name = "BuyButton"
 	buy_button.custom_minimum_size = Vector2(72, 0)
 	buy_button.size_flags_horizontal = Control.SIZE_SHRINK_END
 	buy_button.text = "MAX"
@@ -577,6 +622,22 @@ func _create_store_item_row(item_id: String, item_data: Dictionary) -> PanelCont
 		buy_button.text = "Buy"
 		buy_button.disabled = false
 		buy_button.pressed.connect(Callable(self, "_on_buy_store_item_pressed").bind(item_id))
+		var _buy_blue := StyleBoxFlat.new()
+		_buy_blue.bg_color = Color(0.25, 0.6, 0.9, 1.0)
+		_buy_blue.corner_radius_top_left = 6
+		_buy_blue.corner_radius_top_right = 6
+		_buy_blue.corner_radius_bottom_right = 6
+		_buy_blue.corner_radius_bottom_left = 6
+		var _buy_blue_h := StyleBoxFlat.new()
+		_buy_blue_h.bg_color = Color(0.3, 0.7, 1.0, 1.0)
+		_buy_blue_h.corner_radius_top_left = 6
+		_buy_blue_h.corner_radius_top_right = 6
+		_buy_blue_h.corner_radius_bottom_right = 6
+		_buy_blue_h.corner_radius_bottom_left = 6
+		buy_button.add_theme_stylebox_override("normal", _buy_blue)
+		buy_button.add_theme_stylebox_override("hover", _buy_blue_h)
+		buy_button.add_theme_stylebox_override("pressed", _buy_blue_h.duplicate())
+		buy_button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	top_row.add_child(buy_button)
 
 	var cost_row := HBoxContainer.new()
@@ -1320,6 +1381,23 @@ func _create_trade_offer_row(offer: Dictionary) -> PanelContainer:
 	if String(offer.get("player_uid", "")) == FirebaseManager.local_id:
 		accept_button.disabled = true
 		accept_button.text = "Your offer"
+	else:
+		var _acc_blue := StyleBoxFlat.new()
+		_acc_blue.bg_color = Color(0.25, 0.6, 0.9, 1.0)
+		_acc_blue.corner_radius_top_left = 6
+		_acc_blue.corner_radius_top_right = 6
+		_acc_blue.corner_radius_bottom_right = 6
+		_acc_blue.corner_radius_bottom_left = 6
+		var _acc_blue_h := StyleBoxFlat.new()
+		_acc_blue_h.bg_color = Color(0.3, 0.7, 1.0, 1.0)
+		_acc_blue_h.corner_radius_top_left = 6
+		_acc_blue_h.corner_radius_top_right = 6
+		_acc_blue_h.corner_radius_bottom_right = 6
+		_acc_blue_h.corner_radius_bottom_left = 6
+		accept_button.add_theme_stylebox_override("normal", _acc_blue)
+		accept_button.add_theme_stylebox_override("hover", _acc_blue_h)
+		accept_button.add_theme_stylebox_override("pressed", _acc_blue_h.duplicate())
+		accept_button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	accept_button.pressed.connect(Callable(self, "_on_trade_accept_button_pressed").bind(offer))
 	content.add_child(accept_button)
 
@@ -1514,6 +1592,12 @@ func _create_quest_row(quest_id: int, quest_data: Dictionary) -> PanelContainer:
 	if is_locked:
 		bar.max_value = 1.0
 		bar.value = 0.0
+	var bar_fill := StyleBoxFlat.new()
+	if bool(progress.get("is_claimed", false)):
+		bar_fill.bg_color = Color(0.2, 0.75, 0.25)
+	else:
+		bar_fill.bg_color = Color(0.25, 0.55, 0.9)
+	bar.add_theme_stylebox_override("fill", bar_fill)
 	content.add_child(bar)
 
 	var status_row := HBoxContainer.new()
@@ -1771,7 +1855,7 @@ func _quest_unlocks_pack2(quest_data: Dictionary) -> bool:
 func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelContainer:
 	var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
 	var fish_name: String = String(fish_data.get("name", "Fish #%d" % fish_id))
-	var eat_stamina: int = int(round(float(fish_data.get("eat_stamina", 5.0))))
+	var _eat_stamina: int = int(round(float(fish_data.get("eat_stamina", 5.0))))
 	var outline_texture: Texture2D = _get_outline_texture_for_fish(fish_id)
 
 	var card := PanelContainer.new()
@@ -1822,32 +1906,84 @@ func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelC
 	button_row.add_theme_constant_override("separation", INVENTORY_CARD_SEPARATION)
 	card_column.add_child(button_row)
 
+	var _inv_orange := StyleBoxFlat.new()
+	_inv_orange.bg_color = Color(0.9, 0.5, 0.1, 1.0)
+	_inv_orange.corner_radius_top_left = 4
+	_inv_orange.corner_radius_top_right = 4
+	_inv_orange.corner_radius_bottom_right = 4
+	_inv_orange.corner_radius_bottom_left = 4
+	var _inv_orange_h := StyleBoxFlat.new()
+	_inv_orange_h.bg_color = Color(1.0, 0.6, 0.15, 1.0)
+	_inv_orange_h.corner_radius_top_left = 4
+	_inv_orange_h.corner_radius_top_right = 4
+	_inv_orange_h.corner_radius_bottom_right = 4
+	_inv_orange_h.corner_radius_bottom_left = 4
+
+	# Row with SELL and SELL ALL buttons
+	var sell_row := HBoxContainer.new()
+	sell_row.name = "SellRow"
+	sell_row.add_theme_constant_override("separation", 4)
+	button_row.add_child(sell_row)
+
 	var sell_button := Button.new()
 	sell_button.name = "SellButton"
 	sell_button.text = "SELL"
 	sell_button.clip_text = true
+	sell_button.custom_minimum_size = Vector2(44, 28)
 	sell_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sell_button.add_theme_font_size_override("font_size", INVENTORY_CARD_FONT_SIZE)
+	sell_button.add_theme_stylebox_override("normal", _inv_orange)
+	sell_button.add_theme_stylebox_override("hover", _inv_orange_h)
+	sell_button.add_theme_stylebox_override("pressed", _inv_orange_h.duplicate())
+	sell_button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	sell_button.pressed.connect(Callable(self, "_on_sell_button_pressed").bind(card_index))
-	button_row.add_child(sell_button)
+	sell_row.add_child(sell_button)
 
 	var sell_all_button := Button.new()
 	sell_all_button.name = "SellAllButton"
 	sell_all_button.text = "SELL ALL"
 	sell_all_button.clip_text = true
+	sell_all_button.custom_minimum_size = Vector2(44, 28)
 	sell_all_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sell_all_button.add_theme_font_size_override("font_size", INVENTORY_CARD_FONT_SIZE)
+	sell_all_button.add_theme_stylebox_override("normal", _inv_orange.duplicate())
+	sell_all_button.add_theme_stylebox_override("hover", _inv_orange_h.duplicate())
+	sell_all_button.add_theme_stylebox_override("pressed", _inv_orange_h.duplicate())
+	sell_all_button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	sell_all_button.pressed.connect(Callable(self, "_on_sell_all_button_pressed").bind(card_index))
-	button_row.add_child(sell_all_button)
+	sell_row.add_child(sell_all_button)
+
+	var _inv_green := StyleBoxFlat.new()
+	_inv_green.bg_color = Color(0.2, 0.7, 0.25, 1.0)
+	_inv_green.corner_radius_top_left = 4
+	_inv_green.corner_radius_top_right = 4
+	_inv_green.corner_radius_bottom_right = 4
+	_inv_green.corner_radius_bottom_left = 4
+	var _inv_green_h := StyleBoxFlat.new()
+	_inv_green_h.bg_color = Color(0.25, 0.82, 0.3, 1.0)
+	_inv_green_h.corner_radius_top_left = 4
+	_inv_green_h.corner_radius_top_right = 4
+	_inv_green_h.corner_radius_bottom_right = 4
+	_inv_green_h.corner_radius_bottom_left = 4
+
+	# Row with EAT button
+	var eat_row := HBoxContainer.new()
+	eat_row.name = "EatRow"
+	button_row.add_child(eat_row)
 
 	var eat_button := Button.new()
 	eat_button.name = "EatButton"
-	eat_button.text = "EAT (+%d stamina)" % eat_stamina
+	eat_button.text = "EAT"
 	eat_button.clip_text = true
+	eat_button.custom_minimum_size = Vector2(44, 28)
 	eat_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	eat_button.add_theme_font_size_override("font_size", INVENTORY_CARD_FONT_SIZE)
+	eat_button.add_theme_stylebox_override("normal", _inv_green)
+	eat_button.add_theme_stylebox_override("hover", _inv_green_h)
+	eat_button.add_theme_stylebox_override("pressed", _inv_green_h.duplicate())
+	eat_button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	eat_button.pressed.connect(Callable(self, "_on_eat_button_pressed").bind(card_index))
-	button_row.add_child(eat_button)
+	eat_row.add_child(eat_button)
 
 	var disable_actions: bool = count <= 0
 	sell_button.disabled = disable_actions
@@ -1937,7 +2073,10 @@ func _render_social_messages(messages_desc: Array) -> void:
 		var message: String = str(entry.get("message", ""))
 		var timestamp: int = int(entry.get("created_at_unix", 0))
 		var time_text: String = _format_unix_time(timestamp)
-		social_chat_log.add_text("[%s] %s: %s\n" % [time_text, player_name, message])
+		social_chat_log.push_color(Color(0.55, 0.55, 0.55))
+		social_chat_log.add_text("[%s] " % time_text)
+		social_chat_log.pop()
+		social_chat_log.add_text("%s: %s\n" % [player_name, message])
 
 	if social_chat_log.get_line_count() > 0:
 		social_chat_log.scroll_to_line(social_chat_log.get_line_count() - 1)
@@ -2008,9 +2147,10 @@ func _append_local_chat_message(player_name: String, message: String) -> void:
 	var timestamp_text: String = _format_unix_time(now_unix)
 	if social_chat_log.get_parsed_text().is_empty():
 		social_chat_log.clear()
-		social_chat_log.add_text("[%s] %s: %s\n" % [timestamp_text, player_name, message])
-	else:
-		social_chat_log.add_text("[%s] %s: %s\n" % [timestamp_text, player_name, message])
+	social_chat_log.push_color(Color(0.55, 0.55, 0.55))
+	social_chat_log.add_text("[%s] " % timestamp_text)
+	social_chat_log.pop()
+	social_chat_log.add_text("%s: %s\n" % [player_name, message])
 	if social_chat_log.get_line_count() > 0:
 		social_chat_log.scroll_to_line(social_chat_log.get_line_count() - 1)
 
