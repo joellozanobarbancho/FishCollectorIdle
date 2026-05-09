@@ -2,8 +2,6 @@
   "permissions": {
     "allow": [
       "PowerShell(Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force)",
-      "PowerShell(& \"c:\\\\Users\\\\jloza\\\\Documents\\\\GitHub\\\\FishCollectorIdle\\\\Tools\\\\gen_navbar_icons.ps1\")",
-      "PowerShell(& \"c:\\\\Users\\\\jloza\\\\Documents\\\\GitHub\\\\FishCollectorIdle\\\\tools\\\\gen_navbar_icons.ps1\")",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\jloza\\\\Documents\\\\GitHub\\\\FishCollectorIdle\" -Recurse -Force)",
       "Bash(Select-Object -First 100)",
       "Bash(Format-Table FullName)",

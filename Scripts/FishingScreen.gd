@@ -1542,7 +1542,7 @@ func _create_quest_row(quest_id: int, quest_data: Dictionary) -> PanelContainer:
 	var title_text: String = str(quest_data.get("name", "Quest #%d" % quest_id))
 	var description_text: String = str(quest_data.get("description", ""))
 	var reward_variant: Variant = quest_data.get("reward", {})
-	var reward_text: String = "Reward: --"
+	var reward_text: String = "Reward: Unlock quest pack 2"
 	var has_coin_reward: bool = false
 	if typeof(reward_variant) == TYPE_DICTIONARY:
 		var reward: Dictionary = reward_variant
