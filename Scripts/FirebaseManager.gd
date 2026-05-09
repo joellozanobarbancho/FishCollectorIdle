@@ -563,7 +563,6 @@ func _request_json(method: int, url: String, body: String = "", headers: PackedS
 	}
 
 
-# Trade Market Functions
 func post_trade_offer(offering_fish: Array, wanted_fish: Array, player_name: String) -> bool:
 	"""Post a new trade offer to the market"""
 	print("DEBUG: post_trade_offer called")
@@ -659,7 +658,6 @@ func get_active_trade_offers() -> Array:
 		print("DEBUG: Processing document with keys: %s" % [doc.keys()])
 		var parsed: Dictionary = Utilities.fields2dict(doc)
 		
-		# Extract the document ID from the full name path
 		if doc.has("name"):
 			var doc_name: String = String(doc["name"])
 			var name_parts: PackedStringArray = doc_name.split("/")
@@ -672,7 +670,6 @@ func get_active_trade_offers() -> Array:
 		if parsed.is_empty():
 			print("DEBUG: Skipping empty parsed document")
 			continue
-		# Only include active offers
 		if parsed.get("status", "") == "active":
 			print("DEBUG: Offer has active status; adding offer from player %s" % parsed.get("player_uid", "NONE"))
 			offers.append(parsed)
@@ -691,7 +688,6 @@ func accept_trade_offer(offer_id: String, player_uid_accepting: String) -> bool:
 	
 	print("DEBUG: accept_trade_offer called with offer_id=%s, player=%s" % [offer_id, player_uid_accepting])
 	
-	# Mark the offer as completed
 	var payload := {
 		"status": "completed",
 		"completed_by": player_uid_accepting,

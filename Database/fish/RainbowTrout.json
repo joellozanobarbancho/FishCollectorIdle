@@ -2,12 +2,10 @@
 	"id": 10,
 	"name": "Rainbow Trout",
 	"rarity": 3,
-	"type": "Fresh water",
 	"habitat": "River",
 	"description": "A freshwater trout with iridescent markings, favours cold streams.",
 	"size": { "min": 10, "max": 25 },
 	"value": { "min": 25, "max": 50 },
 	"eat_stamina": 15,
-	"xp_on_catch": 10,
-	"trigger_minigame": true
+	"xp_on_catch": 10
 }

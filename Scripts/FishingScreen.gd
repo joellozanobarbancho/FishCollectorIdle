@@ -176,7 +176,6 @@ func _ready() -> void:
 	popup_panel.visible = false
 	_setup_background_animations()
 	_update_habitat_background()
-	# Let global click handling detect taps inside CatchArea.
 	catch_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	cooldown_orb.visible = false
 	cooldown_orb.call("set_progress", 1.0)
@@ -334,7 +333,6 @@ func _on_fish_button_pressed() -> void:
 		value = int(round(float(value) * 2.0))
 		fish_size = int(round(float(fish_size) * 1.2))
 
-	# Almacenar los datos para el skill check
 	_pending_fish_data = {
 		"fish_id": fish_id,
 		"fish_data": fish_data.duplicate(),
@@ -345,7 +343,6 @@ func _on_fish_button_pressed() -> void:
 		"location_id": location_id
 	}
 
-	# Mostrar el skill check
 	_show_skill_check(fish_id, fish_data)
 
 
@@ -418,7 +415,6 @@ func _on_settings_button_pressed() -> void:
 		social_dropdown.visible = false
 		trade_dropdown.visible = false
 		quest_dropdown.visible = false
-		# Ensure Fishpedia is closed when opening Settings
 		fishpedia_dropdown.visible = false
 		habitat_popup_container.visible = false
 	_update_change_spot_button_visibility()
@@ -468,7 +464,7 @@ func _build_habitat_list() -> void:
 		
 		if is_current:
 			button.disabled = true
-			button.modulate = Color(0.5, 0.5, 0.5, 1.0)  # Gray out current habitat
+			button.modulate = Color(0.5, 0.5, 0.5, 1.0)
 		else:
 			button.pressed.connect(_on_habitat_selected.bind(habitat_id, habitat_name))
 		
@@ -937,13 +933,10 @@ func _hide_post_offer_popup() -> void:
 
 
 func _set_post_offer_modal(enable: bool) -> void:
-	# When enabling modal, store mouse_filter and disabled state of interactive controls
 	if enable:
 		_post_offer_modal_states.clear()
-		# Traverse all Controls under this scene (self) and disable those outside the popup layer
 		for node in get_tree().get_nodes_in_group("__all_ui_controls_temp"):
 			pass
-		# Fallback: traverse children recursively
 		var stack: Array = [self]
 		while not stack.is_empty():
 			var n = stack.pop_back()
@@ -951,21 +944,17 @@ func _set_post_offer_modal(enable: bool) -> void:
 				if not (child is Control):
 					stack.push_back(child)
 					continue
-				# skip the popup layer and its descendants
 				if is_instance_valid(_post_offer_popup_layer) and (child == _post_offer_popup_layer or _is_descendant_of(child, _post_offer_popup_layer)):
 					stack.push_back(child)
 					continue
-				# store
 				var path: String = child.get_path()
 				_post_offer_modal_states[path] = {"mouse_filter": child.mouse_filter}
 				if child is Button:
 					_post_offer_modal_states[path]["disabled"] = child.disabled
 					child.disabled = true
-				# block mouse
 				child.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				stack.push_back(child)
 	else:
-		# restore states
 		for path in _post_offer_modal_states.keys():
 			var node = get_node_or_null(path)
 			if node and node is Control:
@@ -989,7 +978,6 @@ func _is_descendant_of(node: Node, ancestor: Node) -> bool:
 
 
 func _set_habitat_modal(enable: bool) -> void:
-	# Similar to _set_post_offer_modal but for habitat popup
 	if enable:
 		_habitat_modal_states.clear()
 		var stack: Array = [self]
@@ -999,7 +987,6 @@ func _set_habitat_modal(enable: bool) -> void:
 				if not (child is Control):
 					stack.push_back(child)
 					continue
-				# skip the habitat popup layer and its descendants
 				if is_instance_valid(habitat_popup_layer) and (child == habitat_popup_layer or _is_descendant_of(child, habitat_popup_layer)):
 					stack.push_back(child)
 					continue
@@ -1181,7 +1168,6 @@ func _on_post_offer_change_amount(is_request: bool, step: int) -> void:
 
 func _on_post_offer_publish_pressed() -> void:
 	print("DEBUG: Publish button pressed!")
-	# Validate that we have selected fish to offer and fish to request
 	if _post_offer_offer_fish_ids.is_empty() or _post_offer_request_fish_ids.is_empty():
 		print("DEBUG: Fish IDs empty - offering: %d, request: %d" % [_post_offer_offer_fish_ids.size(), _post_offer_request_fish_ids.size()])
 		_show_error_popup("You must select fish to offer and fish to request.")
@@ -1197,13 +1183,11 @@ func _on_post_offer_publish_pressed() -> void:
 		_show_error_popup("Invalid wanted fish selection.")
 		return
 	
-	# Get the selected fish
 	var offering_fish_id: int = _post_offer_offer_fish_ids[_post_offer_offer_index]
 	var wanted_fish_id: int = _post_offer_request_fish_ids[_post_offer_request_index]
 	print("DEBUG: Selected offering fish ID: %d, wanted fish ID: %d" % [offering_fish_id, wanted_fish_id])
 	print("DEBUG: Offering amount: %d, Request amount: %d" % [_post_offer_offer_amount, _post_offer_request_amount])
 	
-	# Create arrays with the selected quantities
 	var offering_fish: Array = []
 	var wanted_fish: Array = []
 	
@@ -1212,13 +1196,11 @@ func _on_post_offer_publish_pressed() -> void:
 	for i in range(_post_offer_request_amount):
 		wanted_fish.append(wanted_fish_id)
 	
-	# Get player name
 	var player_data: Dictionary = Data.save_data.get("player", {})
 	var player_name: String = String(player_data.get("name", "Anonymous"))
 	print("DEBUG: Publishing offer from player '%s'" % player_name)
 	print("DEBUG: Offering %d fish, Requesting %d fish" % [offering_fish.size(), wanted_fish.size()])
-	
-	# Launch the async publishing without awaiting (it will run in background)
+
 	_publish_offer_async(offering_fish, wanted_fish, player_name)
 
 
@@ -1228,7 +1210,6 @@ func _publish_offer_async(offering_fish: Array, wanted_fish: Array, player_name:
 	print("DEBUG: Firebase post_trade_offer returned: %s" % ("SUCCESS" if success else "FAILED"))
 	
 	if success:
-		# Remove the fish from inventory
 		for fish_id in offering_fish:
 			var inventory: Array = InventoryManager.get_inventory()
 			for idx in range(inventory.size()):
@@ -1257,7 +1238,6 @@ func _build_trade_offers() -> void:
 	for child in trade_offer_list.get_children():
 		child.queue_free()
 
-	# Load offers from Firebase
 	var offers: Array = await FirebaseManager.get_active_trade_offers()
 	
 	if offers.is_empty():
@@ -1304,7 +1284,6 @@ func _create_trade_offer_row(offer: Dictionary) -> PanelContainer:
 	trade_row.add_theme_constant_override("separation", 14)
 	content.add_child(trade_row)
 
-	# Extract info from arrays
 	var offering_fish_array: Array = offer.get("offering_fish", [])
 	var wanted_fish_array: Array = offer.get("wanted_fish", [])
 	
@@ -1409,13 +1388,11 @@ func _on_trade_accept_button_pressed(offer: Dictionary) -> void:
 		_show_error_popup("You cannot accept your own trade offer.")
 		return
 
-	# Get the wanted fish array from the offer
 	var wanted_fish_array: Array = offer.get("wanted_fish", [])
 	if wanted_fish_array.is_empty():
 		_show_error_popup("Invalid offer data.")
 		return
 
-	# Check if player has the required fish
 	var inventory: Array = InventoryManager.get_inventory()
 	var fish_count: Dictionary = {}
 
@@ -1427,7 +1404,6 @@ func _on_trade_accept_button_pressed(offer: Dictionary) -> void:
 			fish_count[fish_id] = 0
 		fish_count[fish_id] += 1
 
-	# Check if we have all the required fish
 	var required_count: Dictionary = {}
 	for wanted_fish_id in wanted_fish_array:
 		var fish_id: int = int(wanted_fish_id)
@@ -1435,7 +1411,6 @@ func _on_trade_accept_button_pressed(offer: Dictionary) -> void:
 			required_count[fish_id] = 0
 		required_count[fish_id] += 1
 
-	# Validate we have the fish
 	for fish_id in required_count.keys():
 		var have_count: int = fish_count.get(fish_id, 0)
 		var need_count: int = required_count[fish_id]
@@ -1445,7 +1420,6 @@ func _on_trade_accept_button_pressed(offer: Dictionary) -> void:
 			_show_error_popup("You need %d more %s." % [need_count - have_count, fish_name])
 			return
 
-	# Mark offer as completed in Firebase
 	var offer_id: String = offer.get("offer_id", "")
 	if offer_id.is_empty():
 		_show_error_popup("Error: Offer ID is missing. Please refresh and try again.")
@@ -1455,7 +1429,6 @@ func _on_trade_accept_button_pressed(offer: Dictionary) -> void:
 	var success: bool = await FirebaseManager.accept_trade_offer(offer_id, FirebaseManager.local_id)
 	
 	if success:
-		# Remove the wanted fish from inventory
 		for wanted_fish_id in wanted_fish_array:
 			var fish_id: int = int(wanted_fish_id)
 			var inventory_data: Array = InventoryManager.get_inventory()
@@ -1464,20 +1437,18 @@ func _on_trade_accept_button_pressed(offer: Dictionary) -> void:
 					InventoryManager.remove_fish(idx, false)
 					break
 
-		# Add the offering fish to inventory
 		var offering_fish_array: Array = offer.get("offering_fish", [])
 		for offering_fish_id in offering_fish_array:
 			var fish_id: int = int(offering_fish_id)
 			var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
-			var size: int = 10  # Default size
-			var value: int = int(fish_data.get("value", {}).get("min", 10))  # Use a default value
-			InventoryManager.add_fish(fish_id, size, value)
+			var fish_size: int = 10
+			var value: int = int(fish_data.get("value", {}).get("min", 10))
+			InventoryManager.add_fish(fish_id, fish_size, value)
 
 		File.save_game()
 		await FirebaseManager.upload_save()
 		_refresh_ui("Trade completed successfully!")
 		_build_inventory_cards()
-		# Refresh trade offers list
 		_build_trade_offers()
 	else:
 		_show_error_popup("Failed to complete trade. Please try again.")
@@ -1911,7 +1882,6 @@ func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelC
 	_inv_orange_h.corner_radius_bottom_right = 4
 	_inv_orange_h.corner_radius_bottom_left = 4
 
-	# Row with SELL and SELL ALL buttons
 	var sell_row := HBoxContainer.new()
 	sell_row.name = "SellRow"
 	sell_row.add_theme_constant_override("separation", 4)
@@ -1958,7 +1928,6 @@ func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelC
 	_inv_green_h.corner_radius_bottom_right = 4
 	_inv_green_h.corner_radius_bottom_left = 4
 
-	# Row with EAT and EAT ALL buttons
 	var eat_row := HBoxContainer.new()
 	eat_row.name = "EatRow"
 	eat_row.add_theme_constant_override("separation", 4)
@@ -2175,7 +2144,6 @@ func _merge_pending_messages(remote_chronological: Array) -> Array:
 		if pending_time <= 0:
 			continue
 
-		# Drop very old pending items to avoid stale duplicates forever.
 		if now_unix - pending_time > 30:
 			continue
 
@@ -2367,14 +2335,12 @@ func _get_total_caught_for_fish(fish_id: int) -> int:
 
 
 func _get_fishpedia_texture_for_fish(fish_id: int) -> Texture2D:
-	# Use blackened version if never caught, otherwise use outline texture
 	var outline_tex: Texture2D = _get_outline_texture_for_fish(fish_id)
 	var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
 	if fish_data.is_empty():
 		return outline_tex
 	var fish_name: String = String(fish_data.get("name", ""))
 	if _get_total_caught_for_fish(fish_id) <= 0:
-		# build blackened path based on outline mapping
 		if FISH_OUTLINE_TEXTURES.has(fish_name):
 			var outline_path: String = String(FISH_OUTLINE_TEXTURES[fish_name])
 			var last_slash: int = outline_path.rfind("/")
@@ -2386,16 +2352,13 @@ func _get_fishpedia_texture_for_fish(fish_id: int) -> Texture2D:
 				var loaded_black: Variant = load(black_path)
 				if loaded_black is Texture2D:
 					return loaded_black
-		# fallback to outline
 		return outline_tex
-	# caught at least once -> outline
 	return outline_tex
 
 
 func _on_fishpedia_button_pressed() -> void:
 	fishpedia_dropdown.visible = not fishpedia_dropdown.visible
 	if fishpedia_dropdown.visible:
-		# hide other dropdowns
 		store_dropdown.visible = false
 		inventory_dropdown.visible = false
 		social_dropdown.visible = false
@@ -2406,10 +2369,8 @@ func _on_fishpedia_button_pressed() -> void:
 
 
 func _build_fishpedia_items() -> void:
-	# clear existing
 	for child in fishpedia_list.get_children():
 		child.queue_free()
-	# iterate fish db sorted by id
 	var ids: Array = []
 	for k in DataManager.fish_db.keys():
 		ids.append(int(k))
@@ -2418,11 +2379,10 @@ func _build_fishpedia_items() -> void:
 		var fish_data: Dictionary = DataManager.get_fish_data_by_id(fid)
 		if fish_data.is_empty():
 			continue
-		var name: String = String(fish_data.get("name", "Fish"))
+		var fish_name: String = String(fish_data.get("name", "Fish"))
 		var habitat: String = String(fish_data.get("habitat", ""))
 		var description: String = String(fish_data.get("description", ""))
 		var total_caught: int = _get_total_caught_for_fish(fid)
-		# create row
 		var row := PanelContainer.new()
 		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.custom_minimum_size = Vector2(0, 86)
@@ -2457,7 +2417,7 @@ func _build_fishpedia_items() -> void:
 		content.add_child(vbox)
 
 		var name_lbl := Label.new()
-		name_lbl.text = name
+		name_lbl.text = fish_name
 		name_lbl.clip_text = true
 		name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		vbox.add_child(name_lbl)
@@ -2687,7 +2647,6 @@ func _register_fish_catch(fish_data: Dictionary, is_rare: bool) -> void:
 	if int(fish_data.get("rarity", 0)) >= 3:
 		quest_progress["legendary_fish_caught"] = int(quest_progress.get("legendary_fish_caught", 0)) + 1
 
-	# Track per-fish total captures across the game
 	var player: Dictionary = Data.save_data.get("player", {})
 	if not player.has("fish_totals") or typeof(player["fish_totals"]) != TYPE_DICTIONARY:
 		player["fish_totals"] = {}
@@ -2696,7 +2655,6 @@ func _register_fish_catch(fish_data: Dictionary, is_rare: bool) -> void:
 	totals[fid_key] = int(totals.get(fid_key, 0)) + 1
 	player["fish_totals"] = totals
 	Data.save_data["player"] = player
-	# Persist the updated totals
 	File.save_game()
 
 
@@ -2757,7 +2715,6 @@ func _show_confirmation_dialog(message: String, action: String) -> void:
 	_confirmation_dialog_active = true
 	_confirmation_action = action
 	
-	# Create dialog background overlay
 	var overlay := Panel.new()
 	overlay.name = "ConfirmationOverlay"
 	overlay.anchors_preset = Control.PRESET_FULL_RECT
@@ -2775,7 +2732,6 @@ func _show_confirmation_dialog(message: String, action: String) -> void:
 	overlay.z_index = 100
 	add_child(overlay)
 	
-	# Create dialog panel
 	var dialog := PanelContainer.new()
 	dialog.name = "ConfirmationDialog"
 	dialog.anchors_preset = Control.PRESET_CENTER
@@ -2791,7 +2747,6 @@ func _show_confirmation_dialog(message: String, action: String) -> void:
 	dialog.z_index = 101
 	add_child(dialog)
 	
-	# Create dialog content
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 12)
 	margin.add_theme_constant_override("margin_top", 12)
@@ -2803,27 +2758,23 @@ func _show_confirmation_dialog(message: String, action: String) -> void:
 	content.add_theme_constant_override("separation", 12)
 	margin.add_child(content)
 	
-	# Message label
 	var label := Label.new()
 	label.text = message
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size = Vector2(250, 0)
 	content.add_child(label)
 	
-	# Buttons container
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 8)
 	buttons.alignment = BoxContainer.ALIGNMENT_END
 	content.add_child(buttons)
 	
-	# No button
 	var no_button := Button.new()
 	no_button.text = "No"
 	no_button.custom_minimum_size = Vector2(80, 0)
 	no_button.pressed.connect(_on_confirmation_no)
 	buttons.add_child(no_button)
 	
-	# Yes button
 	var yes_button := Button.new()
 	yes_button.text = "Yes"
 	yes_button.custom_minimum_size = Vector2(80, 0)
@@ -2870,11 +2821,9 @@ func _reset_user_data() -> void:
 	var delete_ok: bool = await FirebaseManager.delete_user_data()
 	
 	if delete_ok:
-		# Clear local data
 		Data.save_data.clear()
 		File.new_game()
-		
-		# Return to main menu
+
 		await get_tree().create_timer(0.5).timeout
 		get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
 	else:
@@ -2896,41 +2845,35 @@ func _show_skill_check(fish_id: int, fish_data: Dictionary) -> void:
 		skill_check_instance.queue_free()
 		return
 
-	# Configurar el skill check
 	skill_check_instance.set_fish_data(fish_id, fish_data)
-	
-	# Conectar la señal de finalización
+
 	if skill_check_instance.has_signal("skill_check_completed"):
 		if not skill_check_instance.skill_check_completed.is_connected(Callable(self, "_on_skill_check_completed")):
 			skill_check_instance.skill_check_completed.connect(Callable(self, "_on_skill_check_completed"))
-	
-	# Agregar a la escena
+
 	add_child(skill_check_instance)
 
 
-func _on_skill_check_completed(success: bool, fish_id: int, fish_data: Dictionary) -> void:
+func _on_skill_check_completed(success: bool, fish_id: int, _fish_data: Dictionary) -> void:
 	_skill_check_active = false
-	
+
 	if success:
-		# El jugador tuvo éxito en el skill check - capturar el pez
 		if _pending_fish_data.is_empty():
 			return
-		
+
 		var fish_size: int = _pending_fish_data.get("fish_size", 1)
 		var value: int = _pending_fish_data.get("value", 1)
 		var location_id: String = _pending_fish_data.get("location_id", "river")
 		var fish_name: String = _pending_fish_data.get("fish_name", "Unknown fish")
 		var is_rare: bool = _pending_fish_data.get("is_rare", false)
 		var actual_fish_data: Dictionary = _pending_fish_data.get("fish_data", {})
-		
-		# Capturar el pez
+
 		InventoryManager.add_fish(fish_id, fish_size, value, location_id)
 		_register_fish_catch(actual_fish_data, is_rare)
-		
+
 		_refresh_ui("You caught a %s!" % fish_name, fish_id)
 		_update_inventory_display()
 	else:
-		# El jugador falló - no capturar el pez
 		_refresh_ui("The fish got away!")
-	
+
 	_pending_fish_data.clear()

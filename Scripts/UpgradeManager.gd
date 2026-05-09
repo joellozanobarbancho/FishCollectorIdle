@@ -1,6 +1,5 @@
 extends Node
 
-# Purchase the next level of an item. Returns false if maxed, can't afford, or item not found.
 func buy_item(item_id: String) -> bool:
 	var item = DataManager.items_db.get(item_id)
 	if item == null:
@@ -8,9 +7,8 @@ func buy_item(item_id: String) -> bool:
 
 	var current_level: int = Data.save_data["player"]["items_owned"].get(item_id, 0)
 	if current_level >= item["max_level"]:
-		return false  # already at max level
+		return false
 
-	# levels array is 0-indexed; next level to buy is at index current_level
 	var next_level_data: Dictionary = item["levels"][current_level]
 	var cost: int = next_level_data["cost"]
 
@@ -27,7 +25,7 @@ func buy_item(item_id: String) -> bool:
 	return true
 
 
-# Recalculates current_stats from base_stats + all purchased item levels.
+
 func apply_items() -> void:
 	var base_stats = Data.save_data["player"]["base_stats"]
 	var current_stats = Data.save_data["player"]["current_stats"]
@@ -50,7 +48,7 @@ func apply_items() -> void:
 				current_stats[effect_key] += level_data["effect"][effect_key]
 
 
-# Returns the cost of the next level, or -1 if maxed / not found.
+
 func get_next_level_cost(item_id: String) -> int:
 	var item = DataManager.items_db.get(item_id)
 	if item == null:
@@ -61,6 +59,6 @@ func get_next_level_cost(item_id: String) -> int:
 	return item["levels"][current_level]["cost"]
 
 
-# Returns the current owned level for an item (0 = not purchased).
+
 func get_item_level(item_id: String) -> int:
 	return Data.save_data["player"]["items_owned"].get(item_id, 0)

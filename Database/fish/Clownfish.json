@@ -2,12 +2,10 @@
 	"id": 2,
 	"name": "Clownfish",
 	"rarity": 1,
-	"type": "Salt water",
 	"habitat": "Sea",
 	"description": "A bright reef dweller that hides among anemones.",
 	"size": { "min": 10, "max": 25 },
 	"value": { "min": 1, "max": 5 },
 	"xp_on_catch": 1,
-	"eat_stamina": 4,
-	"trigger_minigame": false
+	"eat_stamina": 4
 }
