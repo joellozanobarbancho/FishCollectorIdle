@@ -118,7 +118,7 @@ grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("1_main_title")
 expand_mode = 1
-stretch_mode = 5
+stretch_mode = 6
 
 [node name="ButtonsLayer" type="Control" parent="." unique_id=1327896582]
 layout_mode = 1
@@ -127,6 +127,29 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="ExitButtonContainer" type="VBoxContainer" parent="ButtonsLayer" unique_id=856341201]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -110.0
+offset_top = -55.0
+offset_right = 110.0
+offset_bottom = -15.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="ExitButton" type="Button" parent="ButtonsLayer/ExitButtonContainer" unique_id=743198562]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.92, 0.78, 0.2, 0.95)
+theme_override_styles/normal = SubResource("StyleBoxFlat_menu_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_menu_button_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_menu_button_hover")
+text = "Exit Game"
 
 [node name="ButtonColumn" type="VBoxContainer" parent="ButtonsLayer" unique_id=71803159]
 layout_mode = 1
@@ -165,3 +188,4 @@ text = "Register"
 
 [connection signal="pressed" from="ButtonsLayer/ButtonColumn/LoginButton" to="." method="_on_login_button_pressed"]
 [connection signal="pressed" from="ButtonsLayer/ButtonColumn/RegisterButton" to="." method="_on_register_button_pressed"]
+[connection signal="pressed" from="ButtonsLayer/ExitButtonContainer/ExitButton" to="." method="_on_exit_button_pressed"]

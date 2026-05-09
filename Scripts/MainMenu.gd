@@ -10,3 +10,7 @@ func _on_login_button_pressed() -> void:
 
 func _on_register_button_pressed() -> void:
 	get_tree().change_scene_to_file(REGISTER_SCENE_PATH)
+
+
+func _on_exit_button_pressed() -> void:
+	get_tree().quit()

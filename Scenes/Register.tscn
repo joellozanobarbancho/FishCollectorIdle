@@ -92,7 +92,7 @@ grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("1_g6fiq")
 expand_mode = 1
-stretch_mode = 5
+stretch_mode = 6
 
 [node name="BackToHomeButton" type="Button" parent="." unique_id=800077034]
 z_index = 10
