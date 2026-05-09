@@ -26,11 +26,13 @@ UpgradeManager="*uid://b8yods8fd6fbs"
 DataManager="*uid://b8e2dx32msexg"
 LevelManager="*uid://biule74gcsyd2"
 QuestManager="*uid://b74bwqc5v2f8f"
+WindowManager="*res://Scripts/WindowManager.gd"
 
 [display]
 
 window/size/viewport_width=360
 window/size/viewport_height=640
+window/size/resizable=false
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
@@ -51,3 +53,4 @@ theme/custom="res://Themes/GameTheme.tres"
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true

@@ -191,7 +191,6 @@ func _ready() -> void:
 	_connect_social_controls()
 	_connect_settings_controls()
 	_build_habitat_list()
-	habitat_cancel_button.pressed.connect(_on_habitat_cancel_pressed)
 	_update_change_spot_button_visibility()
 	_apply_button_styles()
 
@@ -227,7 +226,7 @@ func _apply_button_styles() -> void:
 		var btn := node as Button
 		if btn == null:
 			continue
-		if btn == change_spot_button or navbar.is_ancestor_of(btn) or btn.name in _skip_names:
+		if btn == change_spot_button or navbar.is_ancestor_of(btn) or habitat_list.is_ancestor_of(btn) or btn.name in _skip_names:
 			continue
 		if btn == reset_data_button:
 			btn.add_theme_stylebox_override("normal", red)
@@ -461,6 +460,7 @@ func _build_habitat_list() -> void:
 		button.text = habitat_name
 		button.custom_minimum_size = Vector2(0, 50)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_style_habitat_button(button)
 		
 		if is_current:
 			button.disabled = true
@@ -471,7 +471,31 @@ func _build_habitat_list() -> void:
 		habitat_list.add_child(button)
 
 
-func _on_habitat_selected(habitat_id: String, habitat_name: String) -> void:
+func _style_habitat_button(button: Button) -> void:
+	var habitat_normal := StyleBoxFlat.new()
+	habitat_normal.bg_color = Color(0.18, 0.18, 0.18, 1.0)
+	habitat_normal.corner_radius_top_left = 6
+	habitat_normal.corner_radius_top_right = 6
+	habitat_normal.corner_radius_bottom_right = 6
+	habitat_normal.corner_radius_bottom_left = 6
+
+	var habitat_hover := StyleBoxFlat.new()
+	habitat_hover.bg_color = Color(0.26, 0.26, 0.26, 1.0)
+	habitat_hover.corner_radius_top_left = 6
+	habitat_hover.corner_radius_top_right = 6
+	habitat_hover.corner_radius_bottom_right = 6
+	habitat_hover.corner_radius_bottom_left = 6
+
+	button.add_theme_stylebox_override("normal", habitat_normal)
+	button.add_theme_stylebox_override("hover", habitat_hover)
+	button.add_theme_stylebox_override("pressed", habitat_hover.duplicate())
+	button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+	button.add_theme_color_override("font_hover_color", Color(1, 1, 1, 1))
+	button.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
+	button.add_theme_color_override("font_focus_color", Color(1, 1, 1, 1))
+
+
+func _on_habitat_selected(habitat_id: String, _habitat_name: String) -> void:
 	Data.save_data["player"]["current_location"] = habitat_id
 	File.save_game()
 	_update_habitat_background()
@@ -500,29 +524,24 @@ func _setup_background_animations() -> void:
 func _configure_background_sprite(sprite: AnimatedSprite2D, frames_dir: String) -> void:
 	var sprite_frames: SpriteFrames = _build_sprite_frames_from_folder(frames_dir)
 	if sprite_frames == null:
+		push_error("Failed to load background frames from: " + frames_dir)
+		return
+	if sprite_frames.get_animation_names().size() == 0:
+		push_error("SpriteFrames loaded but has no animations for: " + frames_dir)
 		return
 	sprite.sprite_frames = sprite_frames
-	sprite.animation = "default"
-	sprite.speed_scale = 1.0
-	sprite.play("default")
+	if sprite_frames.has_animation("default"):
+		sprite.animation = "default"
+		sprite.speed_scale = 1.0
+		sprite.play("default")
+	else:
+		push_error("Animation 'default' not found in sprite_frames for: " + frames_dir)
 
 
 func _build_sprite_frames_from_folder(frames_dir: String) -> SpriteFrames:
 	var frame_paths: Array[String] = []
 	var frame_durations: Array[float] = []
-	var directory: DirAccess = DirAccess.open(frames_dir)
-	if directory == null:
-		return null
-	directory.list_dir_begin()
-	var file_name: String = directory.get_next()
-	while file_name != "":
-		if not directory.current_is_dir() and file_name.to_lower().ends_with(".png"):
-			frame_paths.append(frames_dir.path_join(file_name))
-		file_name = directory.get_next()
-	directory.list_dir_end()
-	frame_paths.sort()
-	if frame_paths.is_empty():
-		return null
+	
 	var durations_path: String = frames_dir.path_join("frame_durations.json")
 	if FileAccess.file_exists(durations_path):
 		var durations_file: FileAccess = FileAccess.open(durations_path, FileAccess.READ)
@@ -531,10 +550,27 @@ func _build_sprite_frames_from_folder(frames_dir: String) -> SpriteFrames:
 			if typeof(parsed_durations) == TYPE_ARRAY:
 				for duration_variant in parsed_durations:
 					frame_durations.append(max(float(duration_variant), 0.01))
+	
+	var max_frames: int = 360
+	for i in range(max_frames):
+		var frame_path: String = frames_dir.path_join("frame_%03d.png" % i)
+		if ResourceLoader.exists(frame_path):
+			frame_paths.append(frame_path)
+		else:
+			# Stop at first non-existent frame
+			break
+	
+	if frame_paths.is_empty():
+		push_error("No PNG files found in: " + frames_dir)
+		return null
+	
 	var frames: SpriteFrames = SpriteFrames.new()
-	frames.add_animation("default")
+	if not frames.has_animation("default"):
+		frames.add_animation("default")
 	frames.set_animation_loop("default", true)
 	frames.set_animation_speed("default", 1.0)
+	
+	var loaded_count: int = 0
 	for frame_index in frame_paths.size():
 		var frame_path: String = frame_paths[frame_index]
 		var frame_texture: Texture2D = load(frame_path)
@@ -543,6 +579,14 @@ func _build_sprite_frames_from_folder(frames_dir: String) -> SpriteFrames:
 			if frame_index < frame_durations.size():
 				frame_duration = frame_durations[frame_index]
 			frames.add_frame("default", frame_texture, frame_duration)
+			loaded_count += 1
+		else:
+			push_warning("Failed to load texture: " + frame_path)
+	
+	if loaded_count == 0:
+		push_error("No frames were successfully loaded from: " + frames_dir)
+		return null
+	
 	return frames
 
 
