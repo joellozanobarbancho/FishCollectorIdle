@@ -4,7 +4,7 @@ const SKILL_CHECK_SCENE_PATH: String = "res://Scenes/SkillCheck.tscn"
 const BASE_CATCH_CHANCE: float = 0.85
 const BASE_STAMINA_COST: float = 15.0
 const BASE_REGEN_PER_SECOND: float = 0.1
-const REEL_COOLDOWN_SECONDS: float = 1.0
+const REEL_COOLDOWN_SECONDS: float = 5.0
 const CHAT_POLL_INTERVAL_SECONDS: float = 2.0
 const CHAT_MAX_MESSAGES_RENDERED: int = 30
 const CHAT_MAX_MESSAGE_LENGTH: int = 180
@@ -1428,7 +1428,32 @@ func _on_trade_market_button_pressed() -> void:
 	trade_dropdown.visible = not trade_dropdown.visible
 	if trade_dropdown.visible:
 		social_dropdown.visible = false
+		_claim_pending_trade_rewards()
 		_build_trade_offers()
+
+
+func _claim_pending_trade_rewards() -> void:
+	var rewards: Array = await FirebaseManager.get_pending_trade_rewards_for_me()
+	if rewards.is_empty():
+		return
+	var any_claimed: bool = false
+	for reward in rewards:
+		var wanted_fish: Array = reward.get("wanted_fish", [])
+		for fish_id_var in wanted_fish:
+			var fish_id: int = int(fish_id_var)
+			if fish_id < 0:
+				continue
+			var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
+			var value: int = int(fish_data.get("value", {}).get("min", 10))
+			InventoryManager.add_fish(fish_id, 10, value)
+		var offer_id: String = reward.get("offer_id", "")
+		if not offer_id.is_empty():
+			await FirebaseManager.mark_offer_reward_claimed(offer_id)
+		any_claimed = true
+	if any_claimed:
+		await FirebaseManager.upload_save()
+		_build_inventory_cards()
+		_refresh_ui("You got new fish!")
 
 
 func _build_trade_offers() -> void:
@@ -1633,8 +1658,8 @@ func _on_trade_accept_button_pressed(offer: Dictionary) -> void:
 		print("ERROR: Offer missing offer_id field:", offer)
 		return
 	
-	var success: bool = await FirebaseManager.accept_trade_offer(offer_id, FirebaseManager.local_id)
-	
+	var success: bool = await FirebaseManager.accept_trade_offer(offer_id, FirebaseManager.local_id, offer)
+
 	if success:
 		for wanted_fish_id in wanted_fish_array:
 			var fish_id: int = int(wanted_fish_id)
@@ -2874,14 +2899,6 @@ func _register_fish_catch(fish_data: Dictionary, is_rare: bool) -> void:
 	if int(fish_data.get("rarity", 0)) >= 3:
 		quest_progress["legendary_fish_caught"] = int(quest_progress.get("legendary_fish_caught", 0)) + 1
 
-	var player: Dictionary = Data.save_data.get("player", {})
-	if not player.has("fish_totals") or typeof(player["fish_totals"]) != TYPE_DICTIONARY:
-		player["fish_totals"] = {}
-	var totals: Dictionary = player["fish_totals"]
-	var fid_key: String = str(int(fish_data.get("id", -1)))
-	totals[fid_key] = int(totals.get(fid_key, 0)) + 1
-	player["fish_totals"] = totals
-	Data.save_data["player"] = player
 	File.save_game()
 
 

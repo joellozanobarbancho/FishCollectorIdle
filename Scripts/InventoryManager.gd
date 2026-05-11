@@ -17,6 +17,14 @@ func add_fish(fish_id: int, size: int, value: int, location_id: String = "") -> 
 
 	Data.save_data["player"]["inventory"].append(entry)
 
+	var player: Dictionary = Data.save_data.get("player", {})
+	if not player.has("fish_totals") or typeof(player["fish_totals"]) != TYPE_DICTIONARY:
+		player["fish_totals"] = {}
+	var totals: Dictionary = player["fish_totals"]
+	totals[str(fish_id)] = int(totals.get(str(fish_id), 0)) + 1
+	player["fish_totals"] = totals
+	Data.save_data["player"] = player
+
 	var fish_data: Dictionary = DataManager.get_fish_data_by_id(fish_id)
 	var xp_on_catch := 0
 	if typeof(fish_data) == TYPE_DICTIONARY and fish_data.has("xp_on_catch"):

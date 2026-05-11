@@ -680,35 +680,39 @@ func get_active_trade_offers() -> Array:
 	return offers
 
 
-func accept_trade_offer(offer_id: String, player_uid_accepting: String) -> bool:
-	"""Accept a trade offer and perform the exchange"""
+func accept_trade_offer(offer_id: String, player_uid_accepting: String, original_offer: Dictionary = {}) -> bool:
+	"""Accept a trade offer. Preserves all original offer fields and marks reward_claimed=false
+	   so the offer creator can later claim their fish without needing a separate collection."""
 	if not is_authenticated():
 		print("No estás autenticado para aceptar ofertas")
 		return false
-	
+
 	print("DEBUG: accept_trade_offer called with offer_id=%s, player=%s" % [offer_id, player_uid_accepting])
-	
-	var payload := {
-		"status": "completed",
-		"completed_by": player_uid_accepting,
-		"completed_at_unix": int(Time.get_unix_time_from_system()),
-		"updated_at_unix": int(Time.get_unix_time_from_system())
-	}
-	
+
+	var payload: Dictionary = {}
+	for key in original_offer.keys():
+		if key != "offer_id":
+			payload[key] = original_offer[key]
+
+	payload["status"] = "completed"
+	payload["completed_by"] = player_uid_accepting
+	payload["completed_at_unix"] = int(Time.get_unix_time_from_system())
+	payload["updated_at_unix"] = int(Time.get_unix_time_from_system())
+	payload["reward_claimed"] = false
+
 	var fields_payload = Utilities.dict2fields(payload)
 	var json_body = JSON.stringify(fields_payload)
 	print("DEBUG: Payload being sent: %s" % [json_body])
-	
+
 	var response: Dictionary = await _request_json(
 		HTTPClient.METHOD_PATCH,
 		_firestore_collection_document_url(TRADE_OFFERS_COLLECTION, offer_id),
 		json_body,
 		_auth_headers()
 	)
-	
+
 	print("DEBUG: Accept response OK: %s, Code: %s, Message: %s" % [response["ok"], response["code"], response["message"]])
-	print("DEBUG: Accept response JSON: %s" % [response["json"]])
-	
+
 	if response["ok"]:
 		print("Oferta marcada como completada: %s" % offer_id)
 		return true
@@ -718,3 +722,63 @@ func accept_trade_offer(offer_id: String, player_uid_accepting: String) -> bool:
 			print("PERMISSION ERROR - Las reglas de Firestore rechazaron la actualización")
 			print("Full response: %s" % response)
 		return false
+
+
+func get_pending_trade_rewards_for_me() -> Array:
+	"""Fetch completed trade offers where the current player is the creator and hasn't claimed yet."""
+	if not is_authenticated():
+		return []
+
+	var response: Dictionary = await _request_json(
+		HTTPClient.METHOD_GET,
+		_firestore_collection_url(TRADE_OFFERS_COLLECTION),
+		"",
+		_auth_headers()
+	)
+	if not response["ok"]:
+		if int(response["code"]) != 404:
+			print("Error fetching pending trade rewards:", response["message"])
+		return []
+
+	var json: Dictionary = response["json"]
+	if not json.has("documents") or typeof(json["documents"]) != TYPE_ARRAY:
+		return []
+
+	var rewards: Array = []
+	for doc_variant in json["documents"]:
+		if typeof(doc_variant) != TYPE_DICTIONARY:
+			continue
+		var doc: Dictionary = doc_variant
+		var parsed: Dictionary = Utilities.fields2dict(doc)
+		if doc.has("name"):
+			var name_parts: PackedStringArray = String(doc["name"]).split("/")
+			if name_parts.size() > 0:
+				parsed["offer_id"] = name_parts[name_parts.size() - 1]
+		if String(parsed.get("player_uid", "")) == local_id \
+				and String(parsed.get("status", "")) == "completed" \
+				and not bool(parsed.get("reward_claimed", false)):
+			rewards.append(parsed)
+	return rewards
+
+
+func mark_offer_reward_claimed(offer_id: String) -> bool:
+	"""Mark a completed offer as reward_claimed=true using updateMask to preserve other fields."""
+	if not is_authenticated():
+		return false
+
+	var payload := {"reward_claimed": true}
+	var fields_payload = Utilities.dict2fields(payload)
+	var json_body = JSON.stringify(fields_payload)
+
+	var url: String = "%s?updateMask.fieldPaths=reward_claimed" % \
+			_firestore_collection_document_url(TRADE_OFFERS_COLLECTION, offer_id)
+
+	var response: Dictionary = await _request_json(
+		HTTPClient.METHOD_PATCH,
+		url,
+		json_body,
+		_auth_headers()
+	)
+	if not response["ok"]:
+		print("Error marking reward claimed:", response["message"])
+	return response["ok"]
