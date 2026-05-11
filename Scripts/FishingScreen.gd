@@ -155,6 +155,11 @@ var _post_offer_modal_states: Dictionary = {}
 var _habitat_modal_states: Dictionary = {}
 var _stamina_fill_style: StyleBoxFlat
 
+var _scroll_touch_start: Vector2 = Vector2.ZERO
+var _scroll_start_v: int = 0
+var _active_scroll_container: ScrollContainer = null
+var _scroll_dragging: bool = false
+
 
 
 func _ready() -> void:
@@ -336,6 +341,40 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_active_scroll_container = null
+			_scroll_dragging = false
+			var containers: Array[ScrollContainer] = [
+				store_item_list.get_parent() as ScrollContainer,
+				grid_container.get_parent() as ScrollContainer,
+				trade_offer_list.get_parent() as ScrollContainer,
+				quest_list.get_parent() as ScrollContainer,
+				fishpedia_list.get_parent() as ScrollContainer,
+			]
+			for sc in containers:
+				if sc != null and sc.is_visible_in_tree() and sc.get_global_rect().has_point(event.position):
+					_active_scroll_container = sc
+					_scroll_touch_start = event.position
+					_scroll_start_v = sc.scroll_vertical
+					break
+		else:
+			if _scroll_dragging:
+				get_viewport().set_input_as_handled()
+			_active_scroll_container = null
+			_scroll_dragging = false
+		return
+
+	if event is InputEventScreenDrag:
+		if _active_scroll_container != null:
+			var delta: Vector2 = event.position - _scroll_touch_start
+			if not _scroll_dragging and abs(delta.y) >= 8.0 and abs(delta.y) > abs(delta.x):
+				_scroll_dragging = true
+			if _scroll_dragging:
+				_active_scroll_container.scroll_vertical = _scroll_start_v - int(delta.y)
+				get_viewport().set_input_as_handled()
+		return
+
 	if store_dropdown.visible or inventory_dropdown.visible or social_dropdown.visible or trade_dropdown.visible or quest_dropdown.visible or settings_dropdown.visible or fishpedia_dropdown.visible or habitat_popup_container.visible or (is_instance_valid(_post_offer_popup_layer) and _post_offer_popup_layer.visible):
 		return
 	if _skill_check_active:
