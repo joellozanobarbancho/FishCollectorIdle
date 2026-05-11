@@ -69,6 +69,7 @@ func load_game() -> void:
 				Data.save_data["player"]["items_owned"] = {}
 			if not Data.save_data["player"].has("achievements"):
 				Data.save_data["player"]["achievements"] = []
+			LevelManager._check_level_up()
 		else:
 			push_error("Error al parsear el JSON")
 	else:

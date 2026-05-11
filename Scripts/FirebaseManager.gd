@@ -390,6 +390,7 @@ func download_save() -> bool:
 	var remote_doc: Dictionary = Utilities.fields2dict(json)
 	if remote_doc.has("save_data") and typeof(remote_doc["save_data"]) == TYPE_DICTIONARY:
 		Data.save_data = remote_doc["save_data"]
+		LevelManager._check_level_up()
 		File.save_game()
 		print("Save descargado desde Firestore")
 		save_downloaded.emit(true)

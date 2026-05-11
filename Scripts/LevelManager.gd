@@ -20,8 +20,8 @@ func _check_level_up() -> void:
 	var current_xp: int = Data.save_data["player"]["xp"]
 	var next_level := current_level + 1
 
-	var next_level_data = DataManager.levels_db.get(next_level)
-	if next_level_data == null:
+	var next_level_data: Dictionary = DataManager.get_level_data(next_level)
+	if next_level_data.is_empty():
 		return
 
 	if current_xp >= next_level_data["xp_required"]:
@@ -42,8 +42,8 @@ func _emit_xp_changed() -> void:
 func get_xp_for_level(level: int) -> int:
 	if level <= 1:
 		return 0
-	var level_data = DataManager.levels_db.get(level)
-	if level_data == null:
+	var level_data: Dictionary = DataManager.get_level_data(level)
+	if level_data.is_empty():
 		return -1
 	return level_data["xp_required"]
 
