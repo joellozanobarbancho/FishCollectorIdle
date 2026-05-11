@@ -2,6 +2,7 @@ extends Node
 
 func _ready() -> void:
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_RESIZE_DISABLED, true)
+	DisplayServer.screen_set_orientation(DisplayServer.SCREEN_PORTRAIT)
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:

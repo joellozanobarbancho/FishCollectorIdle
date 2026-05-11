@@ -33,9 +33,9 @@ WindowManager="*res://Scripts/WindowManager.gd"
 window/size/viewport_width=360
 window/size/viewport_height=640
 window/size/resizable=false
-window/handheld/orientation="portrait"
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+window/handheld/orientation=1
 
 [editor_plugins]
 
