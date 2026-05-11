@@ -6,6 +6,6 @@
 	"description": "A small schooling fish prized for its speed and abundance.",
 	"size": { "min": 10, "max": 25 },
 	"value": { "min": 1, "max": 5 },
-	"eat_stamina": 4,
+	"eat_stamina": 12,
 	"xp_on_catch": 1
 }

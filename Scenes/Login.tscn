@@ -127,6 +127,7 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="AuthCard" type="PanelContainer" parent="CenterContainer" unique_id=759855269]
+custom_minimum_size = Vector2(320, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_auth_card")
 

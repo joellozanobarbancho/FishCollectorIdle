@@ -27,7 +27,7 @@ const QUEST_LOCK_ICON_PATH := "res://Assets/UIElements/lock_icon.svg"
 const RIVER_BACKGROUND_FRAMES_DIR := "res://Assets/UIElements/bg_frames/river"
 const SEA_BACKGROUND_FRAMES_DIR := "res://Assets/UIElements/bg_frames/sea"
 const BACKGROUND_FALLBACK_FRAME_DURATION := 0.1
-const POPUP_HALF_WIDTH: float = 200.0
+const POPUP_HALF_WIDTH: float = 120.0
 const POPUP_HALF_HEIGHT_TEXT_ONLY: float = 34.0
 const POPUP_HALF_HEIGHT_WITH_FISH: float = 82.0
 const REWARD_POPUP_HALF_WIDTH: float = 140.0
@@ -198,28 +198,70 @@ func _ready() -> void:
 func _apply_button_styles() -> void:
 	var blue := StyleBoxFlat.new()
 	blue.bg_color = Color(0.25, 0.6, 0.9, 1.0)
-	blue.corner_radius_top_left = 6
-	blue.corner_radius_top_right = 6
-	blue.corner_radius_bottom_right = 6
-	blue.corner_radius_bottom_left = 6
+	blue.border_color = Color(0.45, 0.72, 1, 0.9)
+	blue.border_width_left = 2
+	blue.border_width_top = 2
+	blue.border_width_right = 2
+	blue.border_width_bottom = 2
+	blue.corner_radius_top_left = 12
+	blue.corner_radius_top_right = 12
+	blue.corner_radius_bottom_right = 12
+	blue.corner_radius_bottom_left = 12
 	var blue_hover := StyleBoxFlat.new()
 	blue_hover.bg_color = Color(0.3, 0.7, 1.0, 1.0)
-	blue_hover.corner_radius_top_left = 6
-	blue_hover.corner_radius_top_right = 6
-	blue_hover.corner_radius_bottom_right = 6
-	blue_hover.corner_radius_bottom_left = 6
+	blue_hover.border_color = Color(0.45, 0.72, 1, 0.9)
+	blue_hover.border_width_left = 2
+	blue_hover.border_width_top = 2
+	blue_hover.border_width_right = 2
+	blue_hover.border_width_bottom = 2
+	blue_hover.corner_radius_top_left = 12
+	blue_hover.corner_radius_top_right = 12
+	blue_hover.corner_radius_bottom_right = 12
+	blue_hover.corner_radius_bottom_left = 12
 	var red := StyleBoxFlat.new()
 	red.bg_color = Color(0.8, 0.15, 0.15, 1.0)
-	red.corner_radius_top_left = 6
-	red.corner_radius_top_right = 6
-	red.corner_radius_bottom_right = 6
-	red.corner_radius_bottom_left = 6
+	red.border_color = Color(0.92, 0.78, 0.2, 0.95)
+	red.border_width_left = 2
+	red.border_width_top = 2
+	red.border_width_right = 2
+	red.border_width_bottom = 2
+	red.corner_radius_top_left = 12
+	red.corner_radius_top_right = 12
+	red.corner_radius_bottom_right = 12
+	red.corner_radius_bottom_left = 12
 	var red_hover := StyleBoxFlat.new()
 	red_hover.bg_color = Color(0.9, 0.25, 0.25, 1.0)
-	red_hover.corner_radius_top_left = 6
-	red_hover.corner_radius_top_right = 6
-	red_hover.corner_radius_bottom_right = 6
-	red_hover.corner_radius_bottom_left = 6
+	red_hover.border_color = Color(0.92, 0.78, 0.2, 0.95)
+	red_hover.border_width_left = 2
+	red_hover.border_width_top = 2
+	red_hover.border_width_right = 2
+	red_hover.border_width_bottom = 2
+	red_hover.corner_radius_top_left = 12
+	red_hover.corner_radius_top_right = 12
+	red_hover.corner_radius_bottom_right = 12
+	red_hover.corner_radius_bottom_left = 12
+	var exit_normal := StyleBoxFlat.new()
+	exit_normal.bg_color = Color(0.13, 0.2, 0.35, 0.88)
+	exit_normal.border_color = Color(0.92, 0.78, 0.2, 0.95)
+	exit_normal.border_width_left = 2
+	exit_normal.border_width_top = 2
+	exit_normal.border_width_right = 2
+	exit_normal.border_width_bottom = 2
+	exit_normal.corner_radius_top_left = 12
+	exit_normal.corner_radius_top_right = 12
+	exit_normal.corner_radius_bottom_right = 12
+	exit_normal.corner_radius_bottom_left = 12
+	var exit_hover := StyleBoxFlat.new()
+	exit_hover.bg_color = Color(0.2, 0.3, 0.5, 0.95)
+	exit_hover.border_color = Color(1.0, 0.86, 0.35, 1.0)
+	exit_hover.border_width_left = 2
+	exit_hover.border_width_top = 2
+	exit_hover.border_width_right = 2
+	exit_hover.border_width_bottom = 2
+	exit_hover.corner_radius_top_left = 12
+	exit_hover.corner_radius_top_right = 12
+	exit_hover.corner_radius_bottom_right = 12
+	exit_hover.corner_radius_bottom_left = 12
 	var navbar := $BottomNavBar
 	var _skip_names: Array = ["BuyButton", "SellButton", "SellAllButton", "EatButton"]
 	for node in find_children("*", "Button", true, false):
@@ -228,14 +270,44 @@ func _apply_button_styles() -> void:
 			continue
 		if btn == change_spot_button or navbar.is_ancestor_of(btn) or habitat_list.is_ancestor_of(btn) or btn.name in _skip_names:
 			continue
-		if btn == reset_data_button:
-			btn.add_theme_stylebox_override("normal", red)
-			btn.add_theme_stylebox_override("hover", red_hover)
+		if btn == reset_data_button or btn == habitat_cancel_button:
+			btn.add_theme_stylebox_override("normal", red.duplicate())
+			btn.add_theme_stylebox_override("hover", red_hover.duplicate())
 			btn.add_theme_stylebox_override("pressed", red_hover.duplicate())
+		elif btn == exit_button:
+			btn.add_theme_stylebox_override("normal", exit_normal)
+			btn.add_theme_stylebox_override("hover", exit_hover)
+			btn.add_theme_stylebox_override("pressed", exit_hover.duplicate())
+			btn.add_theme_color_override("font_color", Color(0.92, 0.78, 0.2, 0.95))
+			btn.add_theme_color_override("font_hover_color", Color(1.0, 0.86, 0.35, 1.0))
+			btn.add_theme_color_override("font_pressed_color", Color(1.0, 0.86, 0.35, 1.0))
 		else:
 			btn.add_theme_stylebox_override("normal", blue.duplicate())
 			btn.add_theme_stylebox_override("hover", blue_hover.duplicate())
 			btn.add_theme_stylebox_override("pressed", blue_hover.duplicate())
+	if change_spot_button:
+		change_spot_button.add_theme_stylebox_override("normal", blue.duplicate())
+		change_spot_button.add_theme_stylebox_override("hover", blue_hover.duplicate())
+		change_spot_button.add_theme_stylebox_override("pressed", blue_hover.duplicate())
+	var nav_btn_normal := StyleBoxFlat.new()
+	nav_btn_normal.bg_color = Color(0.0, 0.0, 0.0, 0.0)
+	nav_btn_normal.corner_radius_top_left = 12
+	nav_btn_normal.corner_radius_top_right = 12
+	nav_btn_normal.corner_radius_bottom_right = 12
+	nav_btn_normal.corner_radius_bottom_left = 12
+	var nav_btn_hover := StyleBoxFlat.new()
+	nav_btn_hover.bg_color = Color(0.13, 0.2, 0.35, 0.55)
+	nav_btn_hover.corner_radius_top_left = 12
+	nav_btn_hover.corner_radius_top_right = 12
+	nav_btn_hover.corner_radius_bottom_right = 12
+	nav_btn_hover.corner_radius_bottom_left = 12
+	for node in navbar.find_children("*", "Button", true, false):
+		var btn := node as Button
+		if btn == null:
+			continue
+		btn.add_theme_stylebox_override("normal", nav_btn_normal.duplicate())
+		btn.add_theme_stylebox_override("hover", nav_btn_hover.duplicate())
+		btn.add_theme_stylebox_override("pressed", nav_btn_hover.duplicate())
 
 
 func _process(delta: float) -> void:
@@ -471,20 +543,86 @@ func _build_habitat_list() -> void:
 		habitat_list.add_child(button)
 
 
+func _apply_yellow_border_style(button: Button) -> void:
+	var sn := StyleBoxFlat.new()
+	sn.bg_color = Color(0.25, 0.6, 0.9, 1.0)
+	sn.border_color = Color(0.45, 0.72, 1, 0.9)
+	sn.border_width_left = 2
+	sn.border_width_top = 2
+	sn.border_width_right = 2
+	sn.border_width_bottom = 2
+	sn.corner_radius_top_left = 12
+	sn.corner_radius_top_right = 12
+	sn.corner_radius_bottom_right = 12
+	sn.corner_radius_bottom_left = 12
+	var sh := StyleBoxFlat.new()
+	sh.bg_color = Color(0.3, 0.7, 1.0, 1.0)
+	sh.border_color = Color(0.45, 0.72, 1, 0.9)
+	sh.border_width_left = 2
+	sh.border_width_top = 2
+	sh.border_width_right = 2
+	sh.border_width_bottom = 2
+	sh.corner_radius_top_left = 12
+	sh.corner_radius_top_right = 12
+	sh.corner_radius_bottom_right = 12
+	sh.corner_radius_bottom_left = 12
+	button.add_theme_stylebox_override("normal", sn)
+	button.add_theme_stylebox_override("hover", sh)
+	button.add_theme_stylebox_override("pressed", sh.duplicate())
+
+
+func _apply_red_button_style(button: Button) -> void:
+	var sn := StyleBoxFlat.new()
+	sn.bg_color = Color(0.8, 0.15, 0.15, 1.0)
+	sn.border_color = Color(0.92, 0.78, 0.2, 0.95)
+	sn.border_width_left = 2
+	sn.border_width_top = 2
+	sn.border_width_right = 2
+	sn.border_width_bottom = 2
+	sn.corner_radius_top_left = 12
+	sn.corner_radius_top_right = 12
+	sn.corner_radius_bottom_right = 12
+	sn.corner_radius_bottom_left = 12
+	var sh := StyleBoxFlat.new()
+	sh.bg_color = Color(0.9, 0.25, 0.25, 1.0)
+	sh.border_color = Color(0.92, 0.78, 0.2, 0.95)
+	sh.border_width_left = 2
+	sh.border_width_top = 2
+	sh.border_width_right = 2
+	sh.border_width_bottom = 2
+	sh.corner_radius_top_left = 12
+	sh.corner_radius_top_right = 12
+	sh.corner_radius_bottom_right = 12
+	sh.corner_radius_bottom_left = 12
+	button.add_theme_stylebox_override("normal", sn)
+	button.add_theme_stylebox_override("hover", sh)
+	button.add_theme_stylebox_override("pressed", sh.duplicate())
+
+
 func _style_habitat_button(button: Button) -> void:
 	var habitat_normal := StyleBoxFlat.new()
-	habitat_normal.bg_color = Color(0.18, 0.18, 0.18, 1.0)
-	habitat_normal.corner_radius_top_left = 6
-	habitat_normal.corner_radius_top_right = 6
-	habitat_normal.corner_radius_bottom_right = 6
-	habitat_normal.corner_radius_bottom_left = 6
+	habitat_normal.bg_color = Color(0.25, 0.6, 0.9, 1.0)
+	habitat_normal.border_color = Color(0.45, 0.72, 1, 0.9)
+	habitat_normal.border_width_left = 2
+	habitat_normal.border_width_top = 2
+	habitat_normal.border_width_right = 2
+	habitat_normal.border_width_bottom = 2
+	habitat_normal.corner_radius_top_left = 12
+	habitat_normal.corner_radius_top_right = 12
+	habitat_normal.corner_radius_bottom_right = 12
+	habitat_normal.corner_radius_bottom_left = 12
 
 	var habitat_hover := StyleBoxFlat.new()
-	habitat_hover.bg_color = Color(0.26, 0.26, 0.26, 1.0)
-	habitat_hover.corner_radius_top_left = 6
-	habitat_hover.corner_radius_top_right = 6
-	habitat_hover.corner_radius_bottom_right = 6
-	habitat_hover.corner_radius_bottom_left = 6
+	habitat_hover.bg_color = Color(0.3, 0.7, 1.0, 1.0)
+	habitat_hover.border_color = Color(0.45, 0.72, 1, 0.9)
+	habitat_hover.border_width_left = 2
+	habitat_hover.border_width_top = 2
+	habitat_hover.border_width_right = 2
+	habitat_hover.border_width_bottom = 2
+	habitat_hover.corner_radius_top_left = 12
+	habitat_hover.corner_radius_top_right = 12
+	habitat_hover.corner_radius_bottom_right = 12
+	habitat_hover.corner_radius_bottom_left = 12
 
 	button.add_theme_stylebox_override("normal", habitat_normal)
 	button.add_theme_stylebox_override("hover", habitat_hover)
@@ -664,16 +802,26 @@ func _create_store_item_row(item_id: String, item_data: Dictionary) -> PanelCont
 		buy_button.pressed.connect(Callable(self, "_on_buy_store_item_pressed").bind(item_id))
 		var _buy_blue := StyleBoxFlat.new()
 		_buy_blue.bg_color = Color(0.25, 0.6, 0.9, 1.0)
-		_buy_blue.corner_radius_top_left = 6
-		_buy_blue.corner_radius_top_right = 6
-		_buy_blue.corner_radius_bottom_right = 6
-		_buy_blue.corner_radius_bottom_left = 6
+		_buy_blue.border_color = Color(0.45, 0.72, 1, 0.9)
+		_buy_blue.border_width_left = 2
+		_buy_blue.border_width_top = 2
+		_buy_blue.border_width_right = 2
+		_buy_blue.border_width_bottom = 2
+		_buy_blue.corner_radius_top_left = 12
+		_buy_blue.corner_radius_top_right = 12
+		_buy_blue.corner_radius_bottom_right = 12
+		_buy_blue.corner_radius_bottom_left = 12
 		var _buy_blue_h := StyleBoxFlat.new()
 		_buy_blue_h.bg_color = Color(0.3, 0.7, 1.0, 1.0)
-		_buy_blue_h.corner_radius_top_left = 6
-		_buy_blue_h.corner_radius_top_right = 6
-		_buy_blue_h.corner_radius_bottom_right = 6
-		_buy_blue_h.corner_radius_bottom_left = 6
+		_buy_blue_h.border_color = Color(0.45, 0.72, 1, 0.9)
+		_buy_blue_h.border_width_left = 2
+		_buy_blue_h.border_width_top = 2
+		_buy_blue_h.border_width_right = 2
+		_buy_blue_h.border_width_bottom = 2
+		_buy_blue_h.corner_radius_top_left = 12
+		_buy_blue_h.corner_radius_top_right = 12
+		_buy_blue_h.corner_radius_bottom_right = 12
+		_buy_blue_h.corner_radius_bottom_left = 12
 		buy_button.add_theme_stylebox_override("normal", _buy_blue)
 		buy_button.add_theme_stylebox_override("hover", _buy_blue_h)
 		buy_button.add_theme_stylebox_override("pressed", _buy_blue_h.duplicate())
@@ -833,6 +981,7 @@ func _build_post_offer_popup() -> void:
 	close_button.text = "X"
 	close_button.custom_minimum_size = Vector2(22, 22)
 	close_button.pressed.connect(Callable(self, "_on_post_offer_close_pressed"))
+	_apply_red_button_style(close_button)
 	header_row.add_child(close_button)
 
 	var selectors_row := HBoxContainer.new()
@@ -856,6 +1005,7 @@ func _build_post_offer_popup() -> void:
 	publish_button.text = "Publish"
 	publish_button.custom_minimum_size = Vector2(96, 24)
 	publish_button.pressed.connect(Callable(self, "_on_post_offer_publish_pressed"))
+	_apply_yellow_border_style(publish_button)
 	publish_row.add_child(publish_button)
 
 	_refresh_post_offer_popup()
@@ -933,6 +1083,9 @@ func _create_post_offer_side_column(title_text: String, is_request: bool) -> Dic
 	plus_button.custom_minimum_size = POST_OFFER_AMOUNT_BUTTON_SIZE
 	plus_button.pressed.connect(Callable(self, "_on_post_offer_change_amount").bind(is_request, 1))
 	amount_row.add_child(plus_button)
+
+	for _pb in [prev_button, next_button, minus_button, plus_button]:
+		_apply_yellow_border_style(_pb)
 
 	return {
 		"root": column,
@@ -1407,16 +1560,26 @@ func _create_trade_offer_row(offer: Dictionary) -> PanelContainer:
 	else:
 		var _acc_blue := StyleBoxFlat.new()
 		_acc_blue.bg_color = Color(0.25, 0.6, 0.9, 1.0)
-		_acc_blue.corner_radius_top_left = 6
-		_acc_blue.corner_radius_top_right = 6
-		_acc_blue.corner_radius_bottom_right = 6
-		_acc_blue.corner_radius_bottom_left = 6
+		_acc_blue.border_color = Color(0.45, 0.72, 1, 0.9)
+		_acc_blue.border_width_left = 2
+		_acc_blue.border_width_top = 2
+		_acc_blue.border_width_right = 2
+		_acc_blue.border_width_bottom = 2
+		_acc_blue.corner_radius_top_left = 12
+		_acc_blue.corner_radius_top_right = 12
+		_acc_blue.corner_radius_bottom_right = 12
+		_acc_blue.corner_radius_bottom_left = 12
 		var _acc_blue_h := StyleBoxFlat.new()
 		_acc_blue_h.bg_color = Color(0.3, 0.7, 1.0, 1.0)
-		_acc_blue_h.corner_radius_top_left = 6
-		_acc_blue_h.corner_radius_top_right = 6
-		_acc_blue_h.corner_radius_bottom_right = 6
-		_acc_blue_h.corner_radius_bottom_left = 6
+		_acc_blue_h.border_color = Color(0.45, 0.72, 1, 0.9)
+		_acc_blue_h.border_width_left = 2
+		_acc_blue_h.border_width_top = 2
+		_acc_blue_h.border_width_right = 2
+		_acc_blue_h.border_width_bottom = 2
+		_acc_blue_h.corner_radius_top_left = 12
+		_acc_blue_h.corner_radius_top_right = 12
+		_acc_blue_h.corner_radius_bottom_right = 12
+		_acc_blue_h.corner_radius_bottom_left = 12
 		accept_button.add_theme_stylebox_override("normal", _acc_blue)
 		accept_button.add_theme_stylebox_override("hover", _acc_blue_h)
 		accept_button.add_theme_stylebox_override("pressed", _acc_blue_h.duplicate())
@@ -1915,16 +2078,26 @@ func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelC
 
 	var _inv_orange := StyleBoxFlat.new()
 	_inv_orange.bg_color = Color(0.9, 0.5, 0.1, 1.0)
-	_inv_orange.corner_radius_top_left = 4
-	_inv_orange.corner_radius_top_right = 4
-	_inv_orange.corner_radius_bottom_right = 4
-	_inv_orange.corner_radius_bottom_left = 4
+	_inv_orange.border_color = Color(1.0, 0.55, 0.0, 1.0)
+	_inv_orange.border_width_left = 2
+	_inv_orange.border_width_top = 2
+	_inv_orange.border_width_right = 2
+	_inv_orange.border_width_bottom = 2
+	_inv_orange.corner_radius_top_left = 12
+	_inv_orange.corner_radius_top_right = 12
+	_inv_orange.corner_radius_bottom_right = 12
+	_inv_orange.corner_radius_bottom_left = 12
 	var _inv_orange_h := StyleBoxFlat.new()
 	_inv_orange_h.bg_color = Color(1.0, 0.6, 0.15, 1.0)
-	_inv_orange_h.corner_radius_top_left = 4
-	_inv_orange_h.corner_radius_top_right = 4
-	_inv_orange_h.corner_radius_bottom_right = 4
-	_inv_orange_h.corner_radius_bottom_left = 4
+	_inv_orange_h.border_color = Color(1.0, 0.55, 0.0, 1.0)
+	_inv_orange_h.border_width_left = 2
+	_inv_orange_h.border_width_top = 2
+	_inv_orange_h.border_width_right = 2
+	_inv_orange_h.border_width_bottom = 2
+	_inv_orange_h.corner_radius_top_left = 12
+	_inv_orange_h.corner_radius_top_right = 12
+	_inv_orange_h.corner_radius_bottom_right = 12
+	_inv_orange_h.corner_radius_bottom_left = 12
 
 	var sell_row := HBoxContainer.new()
 	sell_row.name = "SellRow"
@@ -1961,16 +2134,26 @@ func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelC
 
 	var _inv_green := StyleBoxFlat.new()
 	_inv_green.bg_color = Color(0.2, 0.7, 0.25, 1.0)
-	_inv_green.corner_radius_top_left = 4
-	_inv_green.corner_radius_top_right = 4
-	_inv_green.corner_radius_bottom_right = 4
-	_inv_green.corner_radius_bottom_left = 4
+	_inv_green.border_color = Color(0.15, 0.85, 0.2, 1.0)
+	_inv_green.border_width_left = 2
+	_inv_green.border_width_top = 2
+	_inv_green.border_width_right = 2
+	_inv_green.border_width_bottom = 2
+	_inv_green.corner_radius_top_left = 12
+	_inv_green.corner_radius_top_right = 12
+	_inv_green.corner_radius_bottom_right = 12
+	_inv_green.corner_radius_bottom_left = 12
 	var _inv_green_h := StyleBoxFlat.new()
 	_inv_green_h.bg_color = Color(0.25, 0.82, 0.3, 1.0)
-	_inv_green_h.corner_radius_top_left = 4
-	_inv_green_h.corner_radius_top_right = 4
-	_inv_green_h.corner_radius_bottom_right = 4
-	_inv_green_h.corner_radius_bottom_left = 4
+	_inv_green_h.border_color = Color(0.15, 0.85, 0.2, 1.0)
+	_inv_green_h.border_width_left = 2
+	_inv_green_h.border_width_top = 2
+	_inv_green_h.border_width_right = 2
+	_inv_green_h.border_width_bottom = 2
+	_inv_green_h.corner_radius_top_left = 12
+	_inv_green_h.corner_radius_top_right = 12
+	_inv_green_h.corner_radius_bottom_right = 12
+	_inv_green_h.corner_radius_bottom_left = 12
 
 	var eat_row := HBoxContainer.new()
 	eat_row.name = "EatRow"
@@ -2482,11 +2665,11 @@ func _build_fishpedia_items() -> void:
 		fishpedia_list.add_child(row)
 
 
-func _set_popup_half_height(half_height: float) -> void:
+func _set_popup_half_height(_half_height: float) -> void:
 	popup_panel.offset_left = -POPUP_HALF_WIDTH
 	popup_panel.offset_right = POPUP_HALF_WIDTH
-	popup_panel.offset_top = -half_height
-	popup_panel.offset_bottom = half_height
+	popup_panel.offset_top = 0.0
+	popup_panel.offset_bottom = 0.0
 
 
 func _set_reward_popup_position() -> void:
@@ -2778,51 +2961,123 @@ func _show_confirmation_dialog(message: String, action: String) -> void:
 	
 	var dialog := PanelContainer.new()
 	dialog.name = "ConfirmationDialog"
-	dialog.anchors_preset = Control.PRESET_CENTER
 	dialog.anchor_left = 0.5
 	dialog.anchor_top = 0.5
 	dialog.anchor_right = 0.5
 	dialog.anchor_bottom = 0.5
 	dialog.offset_left = -150.0
-	dialog.offset_top = -70.0
 	dialog.offset_right = 150.0
-	dialog.offset_bottom = 70.0
-	dialog.custom_minimum_size = Vector2(300, 140)
+	dialog.offset_top = 0.0
+	dialog.offset_bottom = 0.0
+	dialog.grow_vertical = Control.GROW_DIRECTION_BOTH
+	dialog.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	dialog.custom_minimum_size = Vector2(300, 0)
 	dialog.z_index = 101
+	var dialog_style := StyleBoxFlat.new()
+	dialog_style.bg_color = Color(0.13, 0.2, 0.35, 0.97)
+	dialog_style.border_color = Color(0.92, 0.78, 0.2, 0.95)
+	dialog_style.border_width_left = 2
+	dialog_style.border_width_top = 2
+	dialog_style.border_width_right = 2
+	dialog_style.border_width_bottom = 2
+	dialog_style.corner_radius_top_left = 12
+	dialog_style.corner_radius_top_right = 12
+	dialog_style.corner_radius_bottom_right = 12
+	dialog_style.corner_radius_bottom_left = 12
+	dialog.add_theme_stylebox_override("panel", dialog_style)
 	add_child(dialog)
-	
+
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 12)
 	margin.add_theme_constant_override("margin_top", 12)
 	margin.add_theme_constant_override("margin_right", 12)
 	margin.add_theme_constant_override("margin_bottom", 12)
 	dialog.add_child(margin)
-	
+
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 12)
 	margin.add_child(content)
-	
+
 	var label := Label.new()
 	label.text = message
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size = Vector2(250, 0)
+	label.add_theme_color_override("font_color", Color(0.92, 0.88, 0.78, 1.0))
 	content.add_child(label)
-	
+
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 8)
 	buttons.alignment = BoxContainer.ALIGNMENT_END
 	content.add_child(buttons)
-	
+
+	var no_normal := StyleBoxFlat.new()
+	no_normal.bg_color = Color(0.13, 0.2, 0.35, 0.88)
+	no_normal.border_color = Color(0.92, 0.78, 0.2, 0.9)
+	no_normal.border_width_left = 2
+	no_normal.border_width_top = 2
+	no_normal.border_width_right = 2
+	no_normal.border_width_bottom = 2
+	no_normal.corner_radius_top_left = 8
+	no_normal.corner_radius_top_right = 8
+	no_normal.corner_radius_bottom_right = 8
+	no_normal.corner_radius_bottom_left = 8
+	var no_hover := StyleBoxFlat.new()
+	no_hover.bg_color = Color(0.2, 0.3, 0.5, 0.95)
+	no_hover.border_color = Color(1.0, 0.86, 0.35, 1.0)
+	no_hover.border_width_left = 2
+	no_hover.border_width_top = 2
+	no_hover.border_width_right = 2
+	no_hover.border_width_bottom = 2
+	no_hover.corner_radius_top_left = 8
+	no_hover.corner_radius_top_right = 8
+	no_hover.corner_radius_bottom_right = 8
+	no_hover.corner_radius_bottom_left = 8
+
 	var no_button := Button.new()
 	no_button.text = "No"
 	no_button.custom_minimum_size = Vector2(80, 0)
 	no_button.pressed.connect(_on_confirmation_no)
+	no_button.add_theme_stylebox_override("normal", no_normal)
+	no_button.add_theme_stylebox_override("hover", no_hover)
+	no_button.add_theme_stylebox_override("pressed", no_hover.duplicate())
+	no_button.add_theme_color_override("font_color", Color(0.92, 0.78, 0.2, 0.95))
+	no_button.add_theme_color_override("font_hover_color", Color(1.0, 0.86, 0.35, 1.0))
+	no_button.add_theme_color_override("font_pressed_color", Color(1.0, 0.86, 0.35, 1.0))
 	buttons.add_child(no_button)
-	
+
+	var yes_normal := StyleBoxFlat.new()
+	yes_normal.bg_color = Color(0.55, 0.1, 0.1, 0.9)
+	yes_normal.border_color = Color(0.92, 0.78, 0.2, 0.9)
+	yes_normal.border_width_left = 2
+	yes_normal.border_width_top = 2
+	yes_normal.border_width_right = 2
+	yes_normal.border_width_bottom = 2
+	yes_normal.corner_radius_top_left = 8
+	yes_normal.corner_radius_top_right = 8
+	yes_normal.corner_radius_bottom_right = 8
+	yes_normal.corner_radius_bottom_left = 8
+	var yes_hover := StyleBoxFlat.new()
+	yes_hover.bg_color = Color(0.8, 0.15, 0.15, 0.95)
+	yes_hover.border_color = Color(1.0, 0.86, 0.35, 1.0)
+	yes_hover.border_width_left = 2
+	yes_hover.border_width_top = 2
+	yes_hover.border_width_right = 2
+	yes_hover.border_width_bottom = 2
+	yes_hover.corner_radius_top_left = 8
+	yes_hover.corner_radius_top_right = 8
+	yes_hover.corner_radius_bottom_right = 8
+	yes_hover.corner_radius_bottom_left = 8
+
 	var yes_button := Button.new()
 	yes_button.text = "Yes"
 	yes_button.custom_minimum_size = Vector2(80, 0)
 	yes_button.pressed.connect(_on_confirmation_yes)
+	yes_button.add_theme_stylebox_override("normal", yes_normal)
+	yes_button.add_theme_stylebox_override("hover", yes_hover)
+	yes_button.add_theme_stylebox_override("pressed", yes_hover.duplicate())
+	yes_button.add_theme_color_override("font_color", Color(1.0, 0.92, 0.78, 1.0))
+	yes_button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
+	yes_button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0, 1.0))
 	buttons.add_child(yes_button)
 
 
