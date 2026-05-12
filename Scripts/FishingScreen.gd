@@ -24,9 +24,22 @@ const QUEST_PACK1_PATH := "res://Database/quests/quest_pack1.json"
 const QUEST_PACK2_PATH := "res://Database/quests/quest_pack2.json"
 const QUEST_PACK2_UNLOCK_FLAG := "quest_pack2_unlocked"
 const QUEST_LOCK_ICON_PATH := "res://Assets/UIElements/lock_icon.svg"
-const RIVER_BACKGROUND_FRAMES_DIR := "res://Assets/UIElements/bg_frames/river"
-const SEA_BACKGROUND_FRAMES_DIR := "res://Assets/UIElements/bg_frames/sea"
-const BACKGROUND_FALLBACK_FRAME_DURATION := 0.1
+const RIVER_BACKGROUND_PATH := "res://Assets/UIElements/bg_frames/river.png"
+const SEA_BACKGROUND_PATH := "res://Assets/UIElements/bg_frames/sea.png"
+const RIVER_FISH_DATA := [
+	{"path": "res://Assets/fish/Fresh Water/Angelfish.png", "is_crab": false, "speed": 90.0, "count": 2},
+	{"path": "res://Assets/fish/Fresh Water/Bass.png", "is_crab": false, "speed": 110.0, "count": 2},
+	{"path": "res://Assets/fish/Fresh Water/Catfish.png", "is_crab": false, "speed": 70.0, "count": 2},
+	{"path": "res://Assets/fish/Fresh Water/Goldfish.png", "is_crab": false, "speed": 100.0, "count": 2},
+	{"path": "res://Assets/fish/Fresh Water/Rainbow Trout.png", "is_crab": false, "speed": 130.0, "count": 2},
+]
+const SEA_FISH_DATA := [
+	{"path": "res://Assets/fish/Salt Water/Anchovy.png", "is_crab": false, "speed": 120.0, "count": 2},
+	{"path": "res://Assets/fish/Salt Water/Clownfish.png", "is_crab": false, "speed": 80.0, "count": 2},
+	{"path": "res://Assets/fish/Salt Water/Crab - Dungeness.png", "is_crab": true, "speed": 55.0, "count": 2},
+	{"path": "res://Assets/fish/Salt Water/Pufferfish.png", "is_crab": false, "speed": 70.0, "count": 2},
+	{"path": "res://Assets/fish/Salt Water/Surgeonfish.png", "is_crab": false, "speed": 110.0, "count": 2},
+]
 const POPUP_HALF_WIDTH: float = 120.0
 const POPUP_HALF_HEIGHT_TEXT_ONLY: float = 34.0
 const POPUP_HALF_HEIGHT_WITH_FISH: float = 82.0
@@ -82,8 +95,10 @@ const TRADE_SAMPLE_OFFERS := [
 @onready var coins_label: Label = $TopHud/CoinsRow/CoinsLabel
 @onready var stamina_bar: ProgressBar = $TopHud/StaminaBar
 @onready var level_label: Label = $LevelLabel
-@onready var river_background: AnimatedSprite2D = $BackgroundLayer/RiverBackground
-@onready var sea_background: AnimatedSprite2D = $BackgroundLayer/SeaBackground
+@onready var river_background: Sprite2D = $BackgroundLayer/RiverBackground
+@onready var sea_background: Sprite2D = $BackgroundLayer/SeaBackground
+@onready var river_fish_layer: Node2D = $BackgroundLayer/RiverFishLayer
+@onready var sea_fish_layer: Node2D = $BackgroundLayer/SeaFishLayer
 @onready var cooldown_orb: Control = $CooldownOrb
 @onready var catch_area: Control = $CatchArea
 @onready var popup_layer: CanvasLayer = $MessagePopupLayer
@@ -179,7 +194,7 @@ func _ready() -> void:
 	habitat_popup_container.visible = false
 	popup_layer.visible = false
 	popup_panel.visible = false
-	_setup_background_animations()
+	_setup_backgrounds()
 	_update_habitat_background()
 	catch_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	cooldown_orb.visible = false
@@ -751,86 +766,53 @@ func _on_habitat_selected(habitat_id: String, _habitat_name: String) -> void:
 
 func _update_habitat_background() -> void:
 	var current_location: String = String(Data.save_data.get("player", {}).get("current_location", "river"))
-	river_background.visible = (current_location == "river")
-	sea_background.visible = (current_location == "sea")
-	if river_background.visible and river_background.is_inside_tree():
-		river_background.play("default")
-	if sea_background.visible and sea_background.is_inside_tree():
-		sea_background.play("default")
+	var is_river: bool = (current_location == "river")
+	river_background.visible = is_river
+	river_fish_layer.visible = is_river
+	sea_background.visible = not is_river
+	sea_fish_layer.visible = not is_river
 
 
-func _setup_background_animations() -> void:
-	_configure_background_sprite(river_background, RIVER_BACKGROUND_FRAMES_DIR)
-	_configure_background_sprite(sea_background, SEA_BACKGROUND_FRAMES_DIR)
+func _setup_backgrounds() -> void:
+	_apply_background(river_background, RIVER_BACKGROUND_PATH, "res://Assets/UIElements/bg_frames/river/frame_000.png")
+	_apply_background(sea_background, SEA_BACKGROUND_PATH, "res://Assets/UIElements/bg_frames/sea/frame_000.png")
+	_spawn_fish(river_fish_layer, RIVER_FISH_DATA)
+	_spawn_fish(sea_fish_layer, SEA_FISH_DATA)
 
 
-func _configure_background_sprite(sprite: AnimatedSprite2D, frames_dir: String) -> void:
-	var sprite_frames: SpriteFrames = _build_sprite_frames_from_folder(frames_dir)
-	if sprite_frames == null:
-		push_error("Failed to load background frames from: " + frames_dir)
+func _apply_background(sprite: Sprite2D, primary: String, _fallback: String) -> void:
+	var tex: Texture2D
+	if ResourceLoader.exists(primary):
+		tex = load(primary) as Texture2D
+	if not tex:
 		return
-	if sprite_frames.get_animation_names().size() == 0:
-		push_error("SpriteFrames loaded but has no animations for: " + frames_dir)
-		return
-	sprite.sprite_frames = sprite_frames
-	if sprite_frames.has_animation("default"):
-		sprite.animation = "default"
-		sprite.speed_scale = 1.0
-		sprite.play("default")
-	else:
-		push_error("Animation 'default' not found in sprite_frames for: " + frames_dir)
+	sprite.texture = tex
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	var tex_size: Vector2 = tex.get_size()
+	if tex_size.x > 0.0 and tex_size.y > 0.0:
+		var vp: Vector2 = get_viewport().get_visible_rect().size
+		sprite.scale = Vector2(vp.x / tex_size.x, vp.y / tex_size.y)
 
 
-func _build_sprite_frames_from_folder(frames_dir: String) -> SpriteFrames:
-	var frame_paths: Array[String] = []
-	var frame_durations: Array[float] = []
-	
-	var durations_path: String = frames_dir.path_join("frame_durations.json")
-	if FileAccess.file_exists(durations_path):
-		var durations_file: FileAccess = FileAccess.open(durations_path, FileAccess.READ)
-		if durations_file != null:
-			var parsed_durations: Variant = JSON.parse_string(durations_file.get_as_text())
-			if typeof(parsed_durations) == TYPE_ARRAY:
-				for duration_variant in parsed_durations:
-					frame_durations.append(max(float(duration_variant), 0.01))
-	
-	var max_frames: int = 360
-	for i in range(max_frames):
-		var frame_path: String = frames_dir.path_join("frame_%03d.png" % i)
-		if ResourceLoader.exists(frame_path):
-			frame_paths.append(frame_path)
-		else:
-			# Stop at first non-existent frame
-			break
-	
-	if frame_paths.is_empty():
-		push_error("No PNG files found in: " + frames_dir)
-		return null
-	
-	var frames: SpriteFrames = SpriteFrames.new()
-	if not frames.has_animation("default"):
-		frames.add_animation("default")
-	frames.set_animation_loop("default", true)
-	frames.set_animation_speed("default", 1.0)
-	
-	var loaded_count: int = 0
-	for frame_index in frame_paths.size():
-		var frame_path: String = frame_paths[frame_index]
-		var frame_texture: Texture2D = load(frame_path)
-		if frame_texture != null:
-			var frame_duration: float = BACKGROUND_FALLBACK_FRAME_DURATION
-			if frame_index < frame_durations.size():
-				frame_duration = frame_durations[frame_index]
-			frames.add_frame("default", frame_texture, frame_duration)
-			loaded_count += 1
-		else:
-			push_warning("Failed to load texture: " + frame_path)
-	
-	if loaded_count == 0:
-		push_error("No frames were successfully loaded from: " + frames_dir)
-		return null
-	
-	return frames
+func _spawn_fish(layer: Node2D, fish_data: Array) -> void:
+	var swimmer_script: GDScript = preload("res://Scripts/FishSwimmer.gd")
+	var viewport_height: float = get_viewport().get_visible_rect().size.y
+	var swim_top: float = 100.0
+	var swim_bottom: float = viewport_height - 80.0
+	var crab_y: float = viewport_height - 60.0
+
+	for data in fish_data:
+		var tex: Texture2D = load(data["path"]) as Texture2D
+		var count: int = data.get("count", 1)
+		for _i in range(count):
+			var fish := TextureRect.new()
+			fish.set_script(swimmer_script)
+			if tex:
+				fish.texture = tex
+			fish.speed = data["speed"] * randf_range(0.8, 1.2)
+			fish.is_crab = data["is_crab"]
+			fish.y_position = crab_y if data["is_crab"] else randf_range(swim_top, swim_bottom)
+			layer.add_child(fish)
 
 
 func _build_store_items() -> void:

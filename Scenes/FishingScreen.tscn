@@ -2,15 +2,15 @@
 
 [ext_resource type="Script" uid="uid://chjvfs2nwpobi" path="res://Scripts/FishingScreen.gd" id="1_h8x2p"]
 [ext_resource type="Script" uid="uid://cpqwn62gnn633" path="res://Scripts/CooldownOrb.gd" id="6_cooldown_orb"]
-[ext_resource type="Texture2D" path="res://Assets/UIElements/navbar_icons/store.png" id="icon_store"]
-[ext_resource type="Texture2D" path="res://Assets/UIElements/navbar_icons/inventory.png" id="icon_inventory"]
-[ext_resource type="Texture2D" path="res://Assets/UIElements/navbar_icons/quests.png" id="icon_quests"]
-[ext_resource type="Texture2D" path="res://Assets/UIElements/navbar_icons/social.png" id="icon_social"]
-[ext_resource type="Texture2D" path="res://Assets/UIElements/navbar_icons/options.png" id="icon_options"]
-[ext_resource type="Texture2D" path="res://Assets/UIElements/coin.png" id="coin_tex"]
+[ext_resource type="Texture2D" uid="uid://dbf34xtcrlv3c" path="res://Assets/UIElements/coin.png" id="coin_tex"]
+[ext_resource type="Texture2D" uid="uid://bm87xn0k3yrty" path="res://Assets/UIElements/navbar_icons/inventory.png" id="icon_inventory"]
+[ext_resource type="Texture2D" uid="uid://dyeolh23v2xgb" path="res://Assets/UIElements/navbar_icons/options.png" id="icon_options"]
+[ext_resource type="Texture2D" uid="uid://dwnuo50xlrwak" path="res://Assets/UIElements/navbar_icons/quests.png" id="icon_quests"]
+[ext_resource type="Texture2D" uid="uid://cvoh1duwtkscl" path="res://Assets/UIElements/navbar_icons/social.png" id="icon_social"]
+[ext_resource type="Texture2D" uid="uid://c7l8rmt7si0br" path="res://Assets/UIElements/navbar_icons/store.png" id="icon_store"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stamina_fill"]
-bg_color = Color(0.2, 0.8, 0.2, 1.0)
+bg_color = Color(0.2, 0.8, 0.2, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_message_bubble"]
 bg_color = Color(0.13, 0.2, 0.35, 0.95)
@@ -48,14 +48,18 @@ script = ExtResource("1_h8x2p")
 [node name="BackgroundLayer" type="CanvasLayer" parent="." unique_id=1459321999]
 layer = -100
 
-[node name="RiverBackground" type="AnimatedSprite2D" parent="BackgroundLayer" unique_id=1459321001]
+[node name="RiverBackground" type="Sprite2D" parent="BackgroundLayer" unique_id=1459321001]
+visible = false
 position = Vector2(180, 320)
-scale = Vector2(0.9230769, 1.032258)
+
+[node name="RiverFishLayer" type="Node2D" parent="BackgroundLayer" unique_id=1459321003]
 visible = false
 
-[node name="SeaBackground" type="AnimatedSprite2D" parent="BackgroundLayer" unique_id=1459321002]
+[node name="SeaBackground" type="Sprite2D" parent="BackgroundLayer" unique_id=1459321002]
+visible = false
 position = Vector2(180, 320)
-scale = Vector2(0.9230769, 1.032258)
+
+[node name="SeaFishLayer" type="Node2D" parent="BackgroundLayer" unique_id=1459321004]
 visible = false
 
 [node name="TopHud" type="VBoxContainer" parent="." unique_id=1928686626]
@@ -70,7 +74,7 @@ offset_bottom = 84.0
 grow_horizontal = 2
 theme_override_constants/separation = 6
 
-[node name="CoinsRow" type="HBoxContainer" parent="TopHud"]
+[node name="CoinsRow" type="HBoxContainer" parent="TopHud" unique_id=901264748]
 layout_mode = 2
 alignment = 1
 
@@ -79,32 +83,28 @@ layout_mode = 2
 text = "Coins: 0"
 vertical_alignment = 1
 
-[node name="CoinIcon" type="TextureRect" parent="TopHud/CoinsRow"]
+[node name="CoinIcon" type="TextureRect" parent="TopHud/CoinsRow" unique_id=6884349]
 texture_filter = 1
 custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
+texture = ExtResource("coin_tex")
 expand_mode = 1
 stretch_mode = 5
-texture = ExtResource("coin_tex")
 
 [node name="StaminaBar" type="ProgressBar" parent="TopHud" unique_id=170356233]
-layout_mode = 2
 custom_minimum_size = Vector2(0, 16)
-max_value = 100.0
+layout_mode = 2
+theme_override_styles/fill = SubResource("StyleBoxFlat_stamina_fill")
 value = 100.0
 show_percentage = false
-theme_override_styles/fill = SubResource("StyleBoxFlat_stamina_fill")
 
 [node name="LevelLabel" type="Label" parent="." unique_id=1234567890]
 layout_mode = 1
-anchors_preset = 0
 offset_left = 8.0
 offset_top = 16.0
 offset_right = 80.0
 offset_bottom = 34.0
-grow_horizontal = 1
 text = "lv. 1"
-horizontal_alignment = 0
 
 [node name="CooldownOrb" type="Control" parent="." unique_id=1002025334]
 visible = false
@@ -128,9 +128,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -170.0
-offset_top = -120.0
+offset_top = -160.0
 offset_right = 170.0
-offset_bottom = 120.0
+offset_bottom = 160.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_default_cursor_shape = 2
@@ -255,7 +255,7 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="StoreContent" type="VBoxContainer" parent="StoreDropdown/MarginContainer/VBoxContainer/StorePanel/StoreMargin"]
+[node name="StoreContent" type="VBoxContainer" parent="StoreDropdown/MarginContainer/VBoxContainer/StorePanel/StoreMargin" unique_id=1537344715]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -423,12 +423,12 @@ custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 alignment = 2
 
-[node name="TradeMarketButton" type="Button" parent="SocialDropdown/MarginContainer/VBoxContainer/ButtonRow"]
+[node name="TradeMarketButton" type="Button" parent="SocialDropdown/MarginContainer/VBoxContainer/ButtonRow" unique_id=640676771]
 custom_minimum_size = Vector2(112, 0)
 layout_mode = 2
 text = "Trade Market"
 
-[node name="PostOfferButton" type="Button" parent="SocialDropdown/MarginContainer/VBoxContainer/ButtonRow"]
+[node name="PostOfferButton" type="Button" parent="SocialDropdown/MarginContainer/VBoxContainer/ButtonRow" unique_id=1912767968]
 custom_minimum_size = Vector2(112, 0)
 layout_mode = 2
 text = "Post an offer"
@@ -716,7 +716,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "Fishpedia"
 
-[node name="Spacer" type="Control" parent="SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList"]
+[node name="Spacer" type="Control" parent="SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel/SettingsMargin/SettingsList" unique_id=584862496]
 layout_mode = 2
 size_flags_vertical = 3
 
@@ -813,11 +813,11 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 6
 
-[node name="HabitatPopupLayer" type="CanvasLayer" parent="." unique_id=3000000003]
+[node name="HabitatPopupLayer" type="CanvasLayer" parent="." unique_id=-1294967293]
 layer = 52
 visible = false
 
-[node name="HabitatPopupContainer" type="PanelContainer" parent="HabitatPopupLayer" unique_id=3000000004]
+[node name="HabitatPopupContainer" type="PanelContainer" parent="HabitatPopupLayer" unique_id=-1294967292]
 visible = false
 anchors_preset = 8
 anchor_left = 0.5
@@ -832,36 +832,36 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_message_bubble")
 
-[node name="PopupMargin" type="MarginContainer" parent="HabitatPopupLayer/HabitatPopupContainer" unique_id=3000000005]
+[node name="PopupMargin" type="MarginContainer" parent="HabitatPopupLayer/HabitatPopupContainer" unique_id=-1294967291]
 layout_mode = 2
 theme_override_constants/margin_left = 6
 theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 6
 theme_override_constants/margin_bottom = 6
 
-[node name="PopupContent" type="VBoxContainer" parent="HabitatPopupLayer/HabitatPopupContainer/PopupMargin" unique_id=3000000006]
+[node name="PopupContent" type="VBoxContainer" parent="HabitatPopupLayer/HabitatPopupContainer/PopupMargin" unique_id=-1294967290]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="TitleLabel" type="Label" parent="HabitatPopupLayer/HabitatPopupContainer/PopupMargin/PopupContent" unique_id=3000000007]
+[node name="TitleLabel" type="Label" parent="HabitatPopupLayer/HabitatPopupContainer/PopupMargin/PopupContent" unique_id=-1294967289]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "Select Fishing Habitat"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="HabitatList" type="VBoxContainer" parent="HabitatPopupLayer/HabitatPopupContainer/PopupMargin/PopupContent" unique_id=3000000008]
+[node name="HabitatList" type="VBoxContainer" parent="HabitatPopupLayer/HabitatPopupContainer/PopupMargin/PopupContent" unique_id=-1294967288]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 2
 theme_override_constants/separation = 8
 
-[node name="ButtonContainer" type="HBoxContainer" parent="HabitatPopupLayer/HabitatPopupContainer/PopupMargin/PopupContent" unique_id=3000000009]
+[node name="ButtonContainer" type="HBoxContainer" parent="HabitatPopupLayer/HabitatPopupContainer/PopupMargin/PopupContent" unique_id=-1294967287]
 layout_mode = 2
-alignment = 2
 theme_override_constants/separation = 8
+alignment = 2
 
-[node name="CancelButton" type="Button" parent="HabitatPopupLayer/HabitatPopupContainer/PopupMargin/PopupContent/ButtonContainer" unique_id=3000000010]
+[node name="CancelButton" type="Button" parent="HabitatPopupLayer/HabitatPopupContainer/PopupMargin/PopupContent/ButtonContainer" unique_id=-1294967286]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 text = "Cancel"
@@ -890,12 +890,12 @@ theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 6
 theme_override_constants/margin_bottom = 6
 
-[node name="RewardContent" type="VBoxContainer" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin"]
+[node name="RewardContent" type="VBoxContainer" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin" unique_id=1523840804]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-alignment = 1
 theme_override_constants/separation = 4
+alignment = 1
 
 [node name="RewardPopupLabel" type="Label" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardContent" unique_id=1496858126]
 layout_mode = 2
@@ -905,42 +905,40 @@ text = "Quest Name"
 horizontal_alignment = 1
 clip_text = true
 
-[node name="RewardRow" type="HBoxContainer" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardContent"]
+[node name="RewardRow" type="HBoxContainer" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardContent" unique_id=1590799111]
 layout_mode = 2
 size_flags_horizontal = 3
-alignment = 1
 theme_override_constants/separation = 4
+alignment = 1
 
-[node name="RewardAmountLabel" type="Label" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardContent/RewardRow"]
+[node name="RewardAmountLabel" type="Label" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardContent/RewardRow" unique_id=1428136667]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "REWARD: 500"
 horizontal_alignment = 1
 
-[node name="RewardCoinIcon" type="TextureRect" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardContent/RewardRow"]
+[node name="RewardCoinIcon" type="TextureRect" parent="RewardPopupLayer/RewardPopupContainer/RewardPopupMargin/RewardContent/RewardRow" unique_id=1424820888]
 texture_filter = 1
 custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
+texture = ExtResource("coin_tex")
 expand_mode = 1
 stretch_mode = 5
-texture = ExtResource("coin_tex")
 
-[node name="ChangeSpotButton" type="Button" parent="." unique_id=3000000002]
+[node name="ChangeSpotButton" type="Button" parent="." unique_id=-1294967294]
+custom_minimum_size = Vector2(92, 48)
 layout_mode = 1
-anchors_preset = 3
-anchor_left = 0.0
+anchors_preset = 2
 anchor_top = 1.0
-anchor_right = 0.0
 anchor_bottom = 1.0
 offset_left = 8.0
 offset_top = -100.0
 offset_right = 100.0
 offset_bottom = -52.0
-grow_horizontal = 1
 grow_vertical = 0
-custom_minimum_size = Vector2(92, 48)
 theme_override_font_sizes/font_size = 12
-text = "Change\nHabitat"
+text = "Change
+Habitat"
 
 [node name="BottomNavBar" type="Panel" parent="." unique_id=1269034571]
 layout_mode = 1
@@ -971,54 +969,54 @@ size_flags_vertical = 3
 theme_override_constants/separation = 2
 
 [node name="StoreButton" type="Button" parent="BottomNavBar/MarginContainer/HBoxContainer" unique_id=1762002455]
+texture_filter = 1
 layout_mode = 2
 size_flags_horizontal = 3
-texture_filter = 1
 tooltip_text = "Store"
 icon = ExtResource("icon_store")
-expand_icon = true
 icon_alignment = 1
+expand_icon = true
 
 [node name="InventoryButton" type="Button" parent="BottomNavBar/MarginContainer/HBoxContainer" unique_id=1708990511]
+texture_filter = 1
 layout_mode = 2
 size_flags_horizontal = 3
-texture_filter = 1
 tooltip_text = "Inventory"
 icon = ExtResource("icon_inventory")
-expand_icon = true
 icon_alignment = 1
+expand_icon = true
 
 [node name="QuestsButton" type="Button" parent="BottomNavBar/MarginContainer/HBoxContainer" unique_id=92606240]
+texture_filter = 1
 layout_mode = 2
 size_flags_horizontal = 3
-texture_filter = 1
 tooltip_text = "Quests"
 icon = ExtResource("icon_quests")
-expand_icon = true
 icon_alignment = 1
+expand_icon = true
 
 [node name="SocialButton" type="Button" parent="BottomNavBar/MarginContainer/HBoxContainer" unique_id=2073268878]
+texture_filter = 1
 layout_mode = 2
 size_flags_horizontal = 3
-texture_filter = 1
 tooltip_text = "Social"
 icon = ExtResource("icon_social")
-expand_icon = true
 icon_alignment = 1
+expand_icon = true
 
 [node name="OptionsButton" type="Button" parent="BottomNavBar/MarginContainer/HBoxContainer" unique_id=1682550832]
+texture_filter = 1
 layout_mode = 2
 size_flags_horizontal = 3
-texture_filter = 1
 tooltip_text = "Options"
 icon = ExtResource("icon_options")
-expand_icon = true
 icon_alignment = 1
+expand_icon = true
 
+[connection signal="pressed" from="HabitatPopupLayer/HabitatPopupContainer/PopupMargin/PopupContent/ButtonContainer/CancelButton" to="." method="_on_habitat_cancel_pressed"]
 [connection signal="pressed" from="ChangeSpotButton" to="." method="_on_change_spot_button_pressed"]
 [connection signal="pressed" from="BottomNavBar/MarginContainer/HBoxContainer/StoreButton" to="." method="_on_store_button_pressed"]
 [connection signal="pressed" from="BottomNavBar/MarginContainer/HBoxContainer/InventoryButton" to="." method="_on_inventory_button_pressed"]
 [connection signal="pressed" from="BottomNavBar/MarginContainer/HBoxContainer/QuestsButton" to="." method="_on_quests_button_pressed"]
 [connection signal="pressed" from="BottomNavBar/MarginContainer/HBoxContainer/SocialButton" to="." method="_on_social_button_pressed"]
 [connection signal="pressed" from="BottomNavBar/MarginContainer/HBoxContainer/OptionsButton" to="." method="_on_settings_button_pressed"]
-[connection signal="pressed" from="HabitatPopupLayer/HabitatPopupContainer/PopupMargin/PopupContent/ButtonContainer/CancelButton" to="." method="_on_habitat_cancel_pressed"]
