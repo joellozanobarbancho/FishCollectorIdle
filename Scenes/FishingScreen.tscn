@@ -445,9 +445,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 0
+theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 0
+theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 4
 
 [node name="ChatLog" type="RichTextLabel" parent="SocialDropdown/MarginContainer/VBoxContainer/ChatPanel/ChatMargin" unique_id=1978703830]

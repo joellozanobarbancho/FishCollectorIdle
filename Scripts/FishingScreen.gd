@@ -198,6 +198,72 @@ func _ready() -> void:
 	_build_habitat_list()
 	_update_change_spot_button_visibility()
 	_apply_button_styles()
+	_apply_dropdown_panel_styles()
+
+
+func _apply_dropdown_panel_styles() -> void:
+	var hdr_style := StyleBoxFlat.new()
+	hdr_style.bg_color = Color(0.08, 0.28, 0.60, 0.40)
+	hdr_style.border_color = Color(1.0, 0.60, 0.0, 1.0)
+	hdr_style.border_width_left = 2
+	hdr_style.border_width_top = 2
+	hdr_style.border_width_right = 2
+	hdr_style.border_width_bottom = 2
+	hdr_style.corner_radius_top_left = 6
+	hdr_style.corner_radius_top_right = 6
+	hdr_style.corner_radius_bottom_right = 6
+	hdr_style.corner_radius_bottom_left = 6
+
+	var cnt_style := StyleBoxFlat.new()
+	cnt_style.bg_color = Color(0.08, 0.28, 0.60, 0.40)
+	cnt_style.border_color = Color(0.92, 0.78, 0.20, 0.90)
+	cnt_style.border_width_left = 2
+	cnt_style.border_width_top = 2
+	cnt_style.border_width_right = 2
+	cnt_style.border_width_bottom = 2
+	cnt_style.corner_radius_top_left = 6
+	cnt_style.corner_radius_top_right = 6
+	cnt_style.corner_radius_bottom_right = 6
+	cnt_style.corner_radius_bottom_left = 6
+
+	var hdr_col := Color(1.0, 0.88, 0.15, 1.0)
+
+	var hdr_panels: Array = [
+		$StoreDropdown/MarginContainer/VBoxContainer/HeaderPanel,
+		$InventoryDropdown/MarginContainer/VBoxContainer/HeaderPanel,
+		$SocialDropdown/MarginContainer/VBoxContainer/HeaderPanel,
+		$TradeDropdown/MarginContainer/VBoxContainer/HeaderPanel,
+		$QuestDropdown/MarginContainer/VBoxContainer/HeaderPanel,
+		$SettingsDropdown/MarginContainer/VBoxContainer/HeaderPanel,
+		$FishpediaDropdown/MarginContainer/VBoxContainer/HeaderPanel,
+	]
+	var cnt_panels: Array = [
+		$StoreDropdown/MarginContainer/VBoxContainer/StorePanel,
+		$InventoryDropdown/MarginContainer/VBoxContainer/InventoryPanel,
+		$SocialDropdown/MarginContainer/VBoxContainer/ChatPanel,
+		$TradeDropdown/MarginContainer/VBoxContainer/TradePanel,
+		$QuestDropdown/MarginContainer/VBoxContainer/AchievementsPanel,
+		$SettingsDropdown/MarginContainer/VBoxContainer/SettingsPanel,
+		$FishpediaDropdown/MarginContainer/VBoxContainer/FishPanel,
+	]
+
+	for p in hdr_panels:
+		var panel := p as Panel
+		if panel == null:
+			continue
+		panel.add_theme_stylebox_override("panel", hdr_style.duplicate())
+		for child in panel.find_children("*", "Label", true, false):
+			var lbl := child as Label
+			if lbl == null:
+				continue
+			lbl.add_theme_color_override("font_color", hdr_col)
+			lbl.add_theme_font_size_override("font_size", 16)
+
+	for p in cnt_panels:
+		var panel := p as Panel
+		if panel == null:
+			continue
+		panel.add_theme_stylebox_override("panel", cnt_style.duplicate())
 
 
 func _apply_button_styles() -> void:
@@ -827,6 +893,9 @@ func _create_store_item_row(item_id: String, item_data: Dictionary) -> PanelCont
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_label.clip_text = true
 	title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	title_label.add_theme_font_size_override("font_size", 15)
+	title_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 1.0))
+	title_label.add_theme_constant_override("outline_size", 3)
 	top_row.add_child(title_label)
 
 	var buy_button := Button.new()
@@ -884,6 +953,7 @@ func _create_store_item_row(item_id: String, item_data: Dictionary) -> PanelCont
 	var description_label := Label.new()
 	description_label.text = item_description
 	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description_label.add_theme_color_override("font_color", Color(0.62, 0.62, 0.62, 1.0))
 	content.add_child(description_label)
 
 	return row
@@ -1536,8 +1606,9 @@ func _create_trade_offer_row(offer: Dictionary) -> PanelContainer:
 	margin.add_child(content)
 
 	var player_name := Label.new()
-	player_name.text = str(offer.get("player_name", "Player"))
-	player_name.add_theme_color_override("font_color", Color(0.95, 0.82, 0.42, 1.0))
+	var offer_player_name: String = str(offer.get("player_name", "Player"))
+	player_name.text = offer_player_name
+	player_name.add_theme_color_override("font_color", _get_username_color(offer_player_name))
 	content.add_child(player_name)
 
 	var trade_row := HBoxContainer.new()
@@ -1577,7 +1648,7 @@ func _create_trade_offer_row(offer: Dictionary) -> PanelContainer:
 	var offering_label := Label.new()
 	offering_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	offering_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	offering_label.text = "%dx %s" % [offering_count, offering_fish_name]
+	offering_label.text = "%s x %d" % [offering_fish_name, offering_count]
 	offering_column.add_child(offering_label)
 
 	var offered_fish_sprite := TextureRect.new()
@@ -1603,7 +1674,7 @@ func _create_trade_offer_row(offer: Dictionary) -> PanelContainer:
 	var wants_label := Label.new()
 	wants_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wants_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	wants_label.text = "%dx %s" % [wanted_count, wanted_fish_name]
+	wants_label.text = "%s x %d" % [wanted_fish_name, wanted_count]
 	wants_column.add_child(wants_label)
 
 	var wanted_fish_sprite := TextureRect.new()
@@ -1806,6 +1877,9 @@ func _create_quest_row(quest_id: int, quest_data: Dictionary) -> PanelContainer:
 	title_label.clip_text = true
 	title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_label.add_theme_font_size_override("font_size", 15)
+	title_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 1.0))
+	title_label.add_theme_constant_override("outline_size", 3)
 	title_row.add_child(title_label)
 
 	if is_locked:
@@ -1822,6 +1896,7 @@ func _create_quest_row(quest_id: int, quest_data: Dictionary) -> PanelContainer:
 	var description_label := Label.new()
 	description_label.text = description_text
 	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description_label.add_theme_color_override("font_color", Color(0.62, 0.62, 0.62, 1.0))
 	content.add_child(description_label)
 
 	var bar := ProgressBar.new()
@@ -2129,7 +2204,7 @@ func _create_inventory_card(fish_id: int, card_index: int, count: int) -> PanelC
 
 	var name_label := Label.new()
 	name_label.name = "FishName"
-	name_label.text = "%s x%d" % [fish_name, count]
+	name_label.text = "%s x %d" % [fish_name, count]
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.clip_text = true
 	name_label.add_theme_font_size_override("font_size", INVENTORY_CARD_FONT_SIZE)
@@ -2344,7 +2419,10 @@ func _render_social_messages(messages_desc: Array) -> void:
 		social_chat_log.push_color(Color(0.55, 0.55, 0.55))
 		social_chat_log.add_text("[%s] " % time_text)
 		social_chat_log.pop()
-		social_chat_log.add_text("%s: %s\n" % [player_name, message])
+		social_chat_log.push_color(_get_username_color(player_name))
+		social_chat_log.add_text(player_name)
+		social_chat_log.pop()
+		social_chat_log.add_text(": %s\n" % message)
 
 	if social_chat_log.get_line_count() > 0:
 		social_chat_log.scroll_to_line(social_chat_log.get_line_count() - 1)
@@ -2390,6 +2468,14 @@ func _current_player_name() -> String:
 	return configured_name
 
 
+func _get_username_color(username: String) -> Color:
+	var h: int = 0
+	for i in range(username.length()):
+		h = (h * 31 + username.unicode_at(i)) & 0x7FFFFFFF
+	return Color.from_hsv(float(h % 1000) / 1000.0, 0.75, 0.95)
+
+
+
 func _format_unix_time(unix_timestamp: int) -> String:
 	if unix_timestamp <= 0:
 		return "--:--"
@@ -2418,7 +2504,10 @@ func _append_local_chat_message(player_name: String, message: String) -> void:
 	social_chat_log.push_color(Color(0.55, 0.55, 0.55))
 	social_chat_log.add_text("[%s] " % timestamp_text)
 	social_chat_log.pop()
-	social_chat_log.add_text("%s: %s\n" % [player_name, message])
+	social_chat_log.push_color(_get_username_color(player_name))
+	social_chat_log.add_text(player_name)
+	social_chat_log.pop()
+	social_chat_log.add_text(": %s\n" % message)
 	if social_chat_log.get_line_count() > 0:
 		social_chat_log.scroll_to_line(social_chat_log.get_line_count() - 1)
 
@@ -2711,6 +2800,9 @@ func _build_fishpedia_items() -> void:
 		name_lbl.text = fish_name
 		name_lbl.clip_text = true
 		name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		name_lbl.add_theme_font_size_override("font_size", 15)
+		name_lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 1.0))
+		name_lbl.add_theme_constant_override("outline_size", 3)
 		vbox.add_child(name_lbl)
 
 		var total_lbl := Label.new()
@@ -2724,6 +2816,7 @@ func _build_fishpedia_items() -> void:
 		var desc_lbl := Label.new()
 		desc_lbl.text = description
 		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc_lbl.add_theme_color_override("font_color", Color(0.62, 0.62, 0.62, 1.0))
 		vbox.add_child(desc_lbl)
 
 		fishpedia_list.add_child(row)
