@@ -18,46 +18,6 @@ El backend se sustenta sobre **Firebase**: Firebase Auth gestiona el registro e 
 
 ---
 
-## Capturas de pantalla
-
-| Pantalla principal de pesca | Minijuego de pesca (Skill Check) |
-|:-:|:-:|
-| ![Pantalla de pesca](images/fishing%20screen.png) | ![Minijuego](images/minigame.png) |
-
-| Captura exitosa | Tienda de mejoras |
-|:-:|:-:|
-| ![Captura exitosa](images/successful%20fishing.png) | ![Tienda](images/store.png) |
-
-| Inventario | Misiones |
-|:-:|:-:|
-| ![Inventario](images/inventory.png) | ![Misiones](images/quests.png) |
-
-| Chat global | Mercado de intercambio |
-|:-:|:-:|
-| ![Chat](images/global%20chat.png) | ![Mercado](images/trade%20market.png) |
-
-| Fishpedia |
-|:-:|
-| ![Fishpedia](images/fishpedia.png) |
-
----
-
-## Funcionalidades
-
-- **Mecánica de pesca** — Haz clic o toca la pantalla para pescar. Un minijuego de precisión (Skill Check) determina si la captura tiene éxito: acierta en el arco verde antes de que se acabe el tiempo.
-- **Inventario** — Gestiona los peces capturados. Véndelos para obtener monedas o cómelos para recuperar stamina.
-- **Tienda de mejoras** — Gasta monedas en mejoras que aumentan la probabilidad de peces raros, la velocidad de recuperación de stamina, el multiplicador de monedas y más.
-- **Guardado en la nube** — El progreso se guarda en Firestore y se sincroniza entre dispositivos.
-- **Chat global en tiempo real** — Habla con todos los jugadores conectados mediante listeners de Firestore.
-- **Presencia online** — Sistema de heartbeat que muestra cuántos jugadores están conectados en cada momento.
-- **Mercado de intercambio** — Publica y acepta ofertas de intercambio de peces con otros jugadores. Las transacciones están validadas por las reglas de seguridad de Firestore.
-- **Misiones y logros** — Dos quest packs con objetivos y recompensas para guiar la progresión del jugador.
-- **Sistema de niveles** — Gana experiencia pescando para subir de nivel y desbloquear nuevos contenidos.
-- **Fishpedia** — Catálogo de todas las especies de peces del juego. Los peces no descubiertos aparecen como siluetas.
-- **Múltiples hábitats** — Cambia entre las zonas de pesca de Río y Mar, cada una con su propio conjunto de peces.
-
----
-
 ## Tecnologías
 
 | Capa | Tecnología |
@@ -101,26 +61,6 @@ FishCollectorIdle/
 
 ---
 
-## Arquitectura
-
-El sistema sigue un modelo **cliente-servidor**: toda la lógica del juego reside en el cliente (Godot), mientras que los datos persistentes y la comunicación entre jugadores se gestionan en Firebase.
-
-La capa de Godot se organiza en **Autoloads** (singletons globales), cada uno responsable de una única área:
-
-| Autoload | Responsabilidad |
-|---|---|
-| `FirebaseManager.gd` | Autenticación, guardado en nube, chat, presencia y mercado |
-| `DataManager.gd` | Bases de datos estáticas y selección aleatoria de peces por zona y rareza |
-| `InventoryManager.gd` | Añadir, eliminar, vender y consumir peces; sincronización con Firestore |
-| `UpgradeManager.gd` | Mejoras adquiridas y cálculo de sus efectos sobre las mecánicas |
-| `QuestManager.gd` | Estado de misiones activas, verificación de progreso y recompensas |
-| `LevelManager.gd` | Seguimiento de XP y desbloqueos por nivel |
-| `Data.gd` | Almacén temporal de datos de sesión compartido entre Autoloads |
-| `File.gd` | Creación, guardado y carga del archivo local de partida |
-| `WindowManager.gd` | Fuerza modo ventana y orientación portrait de pantalla |
-
----
-
 ## Modelo de datos (Firestore)
 
 | Colección | Descripción |
@@ -147,7 +87,7 @@ Las reglas completas están disponibles en [`FIRESTORE_RULES_CHAT.txt`](FIRESTOR
 
 ## Cómo jugar
 
-Descarga la última versión desde la página de [Releases](https://github.com/joellozanobarbancho/FishCollectorIdle/releases):
+Descarga la última versión y obtén más información sobre cómo jugar desde la página de [Releases](https://github.com/joellozanobarbancho/FishCollectorIdle/releases):
 
 - **Windows**: ejecuta `FishCollectorIdle.exe`
 - **Android**: instala `FishCollectorIdle.apk` (activa la instalación desde orígenes desconocidos si es necesario)
