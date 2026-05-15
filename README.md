@@ -87,7 +87,7 @@ Las reglas completas están disponibles en [`FIRESTORE_RULES_CHAT.txt`](FIRESTOR
 
 ## Cómo jugar
 
-Descarga la última versión y obtén más información sobre cómo jugar desde la página de [Releases](https://github.com/joellozanobarbancho/FishCollectorIdle/releases):
+Descarga la última versión y obtén más información sobre cómo jugar desde [aquí](https://joellozanobarbancho.github.io/FishCollectorIdle/):
 
 - **Windows**: ejecuta `FishCollectorIdle.exe`
 - **Android**: instala `FishCollectorIdle.apk` (activa la instalación desde orígenes desconocidos si es necesario)
