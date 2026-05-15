@@ -27,7 +27,6 @@ El backend se sustenta sobre **Firebase**: Firebase Auth gestiona el registro e 
 | Autenticación | Firebase Auth |
 | Base de datos | Cloud Firestore (NoSQL) |
 | Integración Firebase | Plugin [godot-firebase](https://github.com/GodotNuts/GodotFirebase) |
-| Resolución base | 360×640 (orientación vertical) |
 
 ---
 
